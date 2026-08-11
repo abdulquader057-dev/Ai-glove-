@@ -1,0 +1,18 @@
+{
+  "name": "ai-glove",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AI-powered wearable glove for gesture recognition and communication",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  }
+}
