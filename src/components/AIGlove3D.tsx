@@ -1,10 +1,44 @@
 "use client";
 
-import React, { useRef, useMemo, useState, useEffect } from "react";
+import React, { useRef, useMemo, useState, useEffect, Component, ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
+
+// --------------------------------------------------------
+// Error Boundary to catch WebGL / Canvas runtime errors
+// --------------------------------------------------------
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class WebGLErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.warn("WebGL / 3D Canvas error caught:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 // --------------------------------------------------------
 // Glove Constants & Config
@@ -12,7 +46,6 @@ import * as THREE from "three";
 const GESTURES = ["open", "fist", "peace", "thumbsup", "point"] as const;
 type Gesture = typeof GESTURES[number];
 
-// Target curl values for each finger [Thumb, Index, Middle, Ring, Pinky] (0 = open, 1 = curled)
 const GESTURE_MAP: Record<Gesture, number[]> = {
   open: [0, 0, 0, 0, 0],
   fist: [1, 1, 1, 1, 1],
@@ -27,11 +60,10 @@ const GESTURE_MAP: Record<Gesture, number[]> = {
 function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c: number[]) => void }) {
   const group = useRef<THREE.Group>(null);
   const targetCurls = GESTURE_MAP[gesture];
-  
-  // Current interpolated curls
   const currentCurls = useRef([0, 0, 0, 0, 0]);
+  const lastStateUpdate = useRef(0);
 
-  // Materials
+  // Materials created ONCE via useMemo
   const materials = useMemo(() => {
     return {
       fabric: new THREE.MeshStandardMaterial({
@@ -49,16 +81,13 @@ function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c:
         roughness: 0.9,
         metalness: 0.2,
       }),
-      flexSensor: new THREE.MeshStandardMaterial({
+      flexSensors: [0, 1, 2, 3, 4].map(() => new THREE.MeshStandardMaterial({
         color: 0x00d4ff,
         emissive: 0x00d4ff,
         emissiveIntensity: 0.5,
         roughness: 0.2,
         metalness: 0.8,
-      }),
-      pcbTrace: new THREE.MeshBasicMaterial({
-        color: 0x00ff88,
-      })
+      })),
     };
   }, []);
 
@@ -74,21 +103,17 @@ function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c:
     };
   }, []);
 
-  // Finger refs to animate
+  // Finger refs
   const fingerRoots = useRef<THREE.Group[]>([]);
   const fingerMids = useRef<THREE.Group[]>([]);
   const fingerTips = useRef<THREE.Group[]>([]);
-  const flexMaterials = useRef<THREE.MeshStandardMaterial[]>([]);
 
   useFrame((state, delta) => {
-    // 1. Floating Animation
     if (group.current) {
       group.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
     }
 
-    // 2. Animate Curls & Glow
     for (let i = 0; i < 5; i++) {
-      // Interpolate towards target
       currentCurls.current[i] = THREE.MathUtils.damp(
         currentCurls.current[i],
         targetCurls[i],
@@ -97,13 +122,12 @@ function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c:
       );
 
       const curl = currentCurls.current[i];
-      const rootCurl = curl * (Math.PI / 2); // 90 deg
+      const rootCurl = curl * (Math.PI / 2);
       const midCurl = curl * (Math.PI / 2.2);
       const tipCurl = curl * (Math.PI / 3);
 
       if (fingerRoots.current[i]) {
         if (i === 0) {
-          // Thumb special rotation
           fingerRoots.current[i].rotation.z = -0.5 - (curl * 0.5);
           fingerRoots.current[i].rotation.y = -0.4;
           fingerRoots.current[i].rotation.x = rootCurl * 0.5;
@@ -114,21 +138,24 @@ function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c:
       if (fingerMids.current[i]) fingerMids.current[i].rotation.x = midCurl;
       if (fingerTips.current[i]) fingerTips.current[i].rotation.x = tipCurl;
 
-      // Glow effect based on curl
-      if (flexMaterials.current[i]) {
-        flexMaterials.current[i].emissiveIntensity = 0.2 + (curl * 1.5);
-        // Lerp color from cyan to magenta
+      const flexMat = materials.flexSensors[i];
+      if (flexMat) {
+        flexMat.emissiveIntensity = 0.2 + (curl * 1.5);
         const cyan = new THREE.Color(0x00d4ff);
         const magenta = new THREE.Color(0xff00ff);
-        flexMaterials.current[i].emissive.lerpColors(cyan, magenta, curl);
-        flexMaterials.current[i].color.lerpColors(cyan, magenta, curl);
+        flexMat.emissive.lerpColors(cyan, magenta, curl);
+        flexMat.color.lerpColors(cyan, magenta, curl);
       }
     }
-    
-    setLiveCurl([...currentCurls.current]);
+
+    // Throttle React state updates to 100ms interval to prevent UI thrashing
+    const now = state.clock.elapsedTime;
+    if (now - lastStateUpdate.current > 0.1) {
+      lastStateUpdate.current = now;
+      setLiveCurl([...currentCurls.current]);
+    }
   });
 
-  // Build Fingers Data
   const fingersData = [
     { name: "Thumb", px: -1.2, py: -0.5, pz: 0, length: 0.8 },
     { name: "Index", px: -0.7, py: 1.3, pz: 0, length: 1 },
@@ -139,44 +166,32 @@ function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c:
 
   return (
     <group ref={group}>
-      {/* Palm */}
       <mesh geometry={geometries.palm} material={materials.fabric} />
-
-      {/* Wrist */}
       <mesh geometry={geometries.wrist} material={materials.wristband} position={[0, -2, 0]} />
 
-      {/* IMU Component */}
       <mesh geometry={geometries.imu} material={materials.imu} position={[0, 0, 0.35]}>
-        {/* IMU LED */}
         <mesh position={[0.3, 0.3, 0.11]}>
           <sphereGeometry args={[0.05, 8, 8]} />
           <meshBasicMaterial color={0x00d4ff} />
         </mesh>
       </mesh>
 
-      {/* Procedural Fingers */}
       {fingersData.map((f, i) => {
-        // Clone flex material per finger for independent glow
-        const mat = materials.flexSensor.clone();
-        flexMaterials.current[i] = mat;
-
+        const mat = materials.flexSensors[i];
         return (
           <group 
             key={f.name} 
             position={[f.px, f.py, f.pz]} 
             ref={(el) => { if (el) fingerRoots.current[i] = el; }}
           >
-            {/* Proximal */}
             <mesh geometry={i === 0 ? geometries.thumbSegment : geometries.fingerSegment} material={materials.fabric} position={[0, f.length/2, 0]} />
             <mesh geometry={geometries.flexStrip} material={mat} position={[0, f.length/2, 0.15]} />
 
             <group position={[0, f.length, 0]} ref={(el) => { if (el) fingerMids.current[i] = el; }}>
-              {/* Middle */}
               <mesh geometry={i === 0 ? geometries.thumbSegment : geometries.fingerSegment} material={materials.fabric} position={[0, f.length/2.5, 0]} />
               <mesh geometry={geometries.flexStrip} material={mat} position={[0, f.length/2.5, 0.15]} scale={[1, 0.8, 1]} />
 
               <group position={[0, f.length/1.2, 0]} ref={(el) => { if (el) fingerTips.current[i] = el; }}>
-                {/* Distal */}
                 <mesh geometry={i === 0 ? geometries.thumbSegment : geometries.fingerSegment} material={materials.fabric} position={[0, f.length/3, 0]} scale={[0.9, 0.7, 0.9]} />
                 <mesh geometry={geometries.flexStrip} material={mat} position={[0, f.length/3, 0.13]} scale={[1, 0.6, 1]} />
               </group>
@@ -189,20 +204,18 @@ function HandMesh({ gesture, setLiveCurl }: { gesture: Gesture, setLiveCurl: (c:
 }
 
 // --------------------------------------------------------
-// Data Particles (IMU Stream)
+// Data Particles
 // --------------------------------------------------------
 function DataParticles() {
-  const count = 100;
+  const count = 60;
   const mesh = useRef<THREE.InstancedMesh>(null);
-  
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  
   const particles = useMemo(() => {
     return new Array(count).fill(0).map(() => ({
-      t: Math.random() * 100,
-      factor: 20 + Math.random() * 100,
-      speed: 0.01 + Math.random() / 200,
+      t: Math.random() * 10,
+      speed: 0.02 + Math.random() * 0.03,
       xFactor: -0.5 + Math.random(),
-      yFactor: -0.5 + Math.random(),
       zFactor: -0.5 + Math.random(),
     }));
   }, [count]);
@@ -211,24 +224,20 @@ function DataParticles() {
     if (!mesh.current) return;
     particles.forEach((particle, i) => {
       let t = (particle.t += particle.speed);
-      
-      // Reset particle if it goes too high
-      if (t > 10) {
+      if (t > 8) {
         particle.t = 0;
         t = 0;
       }
       
       dummy.position.set(
-        particle.xFactor * t * 0.5,
-        t * 0.8, // Flow upward
-        0.35 + (particle.zFactor * t * 0.5) // Emit from IMU position (0, 0, 0.35)
+        particle.xFactor * t * 0.4,
+        t * 0.6,
+        0.35 + (particle.zFactor * t * 0.4)
       );
       
-      // Scale shrinks as it rises
-      const s = Math.max(0, 1 - (t / 10)) * 0.05;
+      const s = Math.max(0, 1 - (t / 8)) * 0.04;
       dummy.scale.set(s, s, s);
       dummy.updateMatrix();
-      
       mesh.current!.setMatrixAt(i, dummy.matrix);
     });
     mesh.current.instanceMatrix.needsUpdate = true;
@@ -253,9 +262,8 @@ function BluetoothWaves() {
     const t = clock.elapsedTime;
     
     wavesRef.current.children.forEach((wave, i) => {
-      // Loop over 3 seconds, offset by 1s each
       const localT = (t + i) % 3;
-      const scale = 1 + localT * 2;
+      const scale = 1 + localT * 1.5;
       const opacity = Math.max(0, 1 - (localT / 3));
       
       wave.scale.set(scale, scale, scale);
@@ -284,8 +292,7 @@ function ScanLine() {
   
   useFrame(({ clock }) => {
     if (!lineRef.current) return;
-    // Moves up and down over 4 seconds
-    lineRef.current.position.y = Math.sin(clock.elapsedTime * (Math.PI / 2)) * 3;
+    lineRef.current.position.y = Math.sin(clock.elapsedTime * 1.5) * 2.5;
   });
 
   return (
@@ -293,6 +300,40 @@ function ScanLine() {
       <planeGeometry args={[6, 6]} />
       <meshBasicMaterial color={0x00d4ff} transparent opacity={0.15} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
     </mesh>
+  );
+}
+
+// --------------------------------------------------------
+// 2D Fallback Component for Non-WebGL environments
+// --------------------------------------------------------
+function GloveFallback({ gesture, onNextGesture }: { gesture: Gesture, onNextGesture: () => void }) {
+  const emojis: Record<Gesture, string> = {
+    open: "✋",
+    fist: "✊",
+    peace: "✌️",
+    thumbsup: "👍",
+    point: "👆",
+  };
+
+  return (
+    <div 
+      onClick={onNextGesture}
+      className="w-full h-[400px] lg:h-[600px] bg-[#050508] rounded-2xl border border-border flex flex-col items-center justify-center p-8 cursor-pointer relative overflow-hidden group"
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent pointer-events-none" />
+      <div className="text-8xl mb-6 transition-transform duration-300 group-hover:scale-110">
+        {emojis[gesture]}
+      </div>
+      <span className="text-xl font-bold text-white uppercase tracking-widest mb-2">
+        AI Glove Prototype
+      </span>
+      <span className="text-sm text-cyan-400 font-mono mb-4">
+        Active Gesture: {gesture.toUpperCase()}
+      </span>
+      <span className="text-xs text-text-muted bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+        Click to cycle gesture
+      </span>
+    </div>
   );
 }
 
@@ -313,87 +354,80 @@ export default function AIGlove3D() {
     setGestureIndex((prev) => (prev + 1) % GESTURES.length);
   };
 
-  if (!isClient) return (
-    <div className="w-full h-[400px] lg:h-[600px] bg-[#050508] rounded-xl flex items-center justify-center border border-border">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-accent text-sm tracking-widest uppercase">Initializing Neural Mesh...</p>
-      </div>
-    </div>
-  );
+  if (!isClient) {
+    return <GloveFallback gesture={currentGesture} onNextGesture={handleClick} />;
+  }
 
   return (
-    <div 
-      className="relative w-full h-[400px] lg:h-[600px] rounded-2xl overflow-hidden shadow-xl border border-[#334155] cursor-pointer"
-      onClick={handleClick}
-    >
-      <Canvas camera={{ position: [0, 2, 7], fov: 45 }}>
-        {/* Environment & Lighting */}
-        <color attach="background" args={["#050508"]} />
-        <ambientLight intensity={0.5} color={0x404040} />
-        <directionalLight position={[5, 10, 7]} intensity={1.5} color={0xffffff} />
-        <pointLight position={[0, -2, 2]} intensity={0.8} color={0x00d4ff} /> {/* Cyan Accent */}
-        <pointLight position={[0, 4, -2]} intensity={0.4} color={0xff00ff} /> {/* Magenta Rim */}
+    <WebGLErrorBoundary fallback={<GloveFallback gesture={currentGesture} onNextGesture={handleClick} />}>
+      <div 
+        className="relative w-full h-[400px] lg:h-[600px] rounded-2xl overflow-hidden shadow-xl border border-[#334155] cursor-pointer"
+        onClick={handleClick}
+      >
+        <Canvas camera={{ position: [0, 2, 7], fov: 45 }}>
+          <color attach="background" args={["#050508"]} />
+          <ambientLight intensity={0.5} color={0x404040} />
+          <directionalLight position={[5, 10, 7]} intensity={1.5} color={0xffffff} />
+          <pointLight position={[0, -2, 2]} intensity={0.8} color={0x00d4ff} />
+          <pointLight position={[0, 4, -2]} intensity={0.4} color={0xff00ff} />
 
-        {/* 3D Elements */}
-        <HandMesh gesture={currentGesture} setLiveCurl={setLiveCurl} />
-        <DataParticles />
-        <BluetoothWaves />
-        <ScanLine />
+          <HandMesh gesture={currentGesture} setLiveCurl={setLiveCurl} />
+          <DataParticles />
+          <BluetoothWaves />
+          <ScanLine />
 
-        {/* Post Processing */}
-        <EffectComposer>
-          <Bloom luminanceThreshold={0.85} mipmapBlur intensity={1.5} radius={0.6} />
-        </EffectComposer>
+          <EffectComposer>
+            <Bloom luminanceThreshold={0.85} mipmapBlur intensity={1.5} radius={0.6} />
+          </EffectComposer>
 
-        {/* Controls */}
-        <OrbitControls 
-          enableZoom={false} 
-          enablePan={false} 
-          autoRotate 
-          autoRotateSpeed={0.5} 
-          enableDamping 
-          dampingFactor={0.05} 
-        />
-      </Canvas>
+          <OrbitControls 
+            enableZoom={false} 
+            enablePan={false} 
+            autoRotate 
+            autoRotateSpeed={0.5} 
+            enableDamping 
+            dampingFactor={0.05} 
+          />
+        </Canvas>
 
-      {/* Floating UI Overlay */}
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-accent/30 rounded-lg p-4 pointer-events-none">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-          <span className="text-xs uppercase tracking-wider text-text-on-dark font-semibold">Live Sensor Data</span>
+        {/* Floating UI Overlay */}
+        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-accent/30 rounded-lg p-4 pointer-events-none">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+            <span className="text-xs uppercase tracking-wider text-text-on-dark font-semibold">Live Sensor Data</span>
+          </div>
+          
+          <div className="space-y-2">
+            {['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].map((finger, i) => {
+              const curlPercent = Math.round((liveCurl[i] || 0) * 100);
+              return (
+                <div key={finger} className="flex items-center gap-3">
+                  <span className="text-xs text-text-muted w-12">{finger}</span>
+                  <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-accent transition-all duration-150"
+                      style={{ width: `${curlPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-accent w-6 text-right tabular-nums">{curlPercent}%</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Current Gesture Label */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-white/10 rounded-full px-6 py-2 pointer-events-none">
+          <span className="text-sm font-medium text-white tracking-widest uppercase flex items-center gap-2">
+            Gesture: <span className="text-accent">{currentGesture}</span>
+          </span>
         </div>
         
-        <div className="space-y-2">
-          {['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].map((finger, i) => {
-            const curlPercent = Math.round(liveCurl[i] * 100);
-            return (
-              <div key={finger} className="flex items-center gap-3">
-                <span className="text-xs text-text-muted w-12">{finger}</span>
-                <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-accent transition-all duration-75"
-                    style={{ width: `${curlPercent}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-accent w-6 text-right tabular-nums">{curlPercent}%</span>
-              </div>
-            )
-          })}
+        {/* Interaction Hint */}
+        <div className="absolute bottom-2 right-4 pointer-events-none">
+          <span className="text-[10px] text-white/40 uppercase tracking-widest">Click to change gesture</span>
         </div>
       </div>
-
-      {/* Current Gesture Label */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-white/10 rounded-full px-6 py-2 pointer-events-none">
-        <span className="text-sm font-medium text-white tracking-widest uppercase flex items-center gap-2">
-          Gesture: <span className="text-accent">{currentGesture}</span>
-        </span>
-      </div>
-      
-      {/* Interaction Hint */}
-      <div className="absolute bottom-2 right-4 pointer-events-none">
-        <span className="text-[10px] text-white/40 uppercase tracking-widest">Click to change gesture</span>
-      </div>
-    </div>
+    </WebGLErrorBoundary>
   );
 }
