@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -65,8 +63,6 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-bg-primary text-text-primary`}>
         <a href="#main-content" className="skip-link">Skip to content</a>
         {children}
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
