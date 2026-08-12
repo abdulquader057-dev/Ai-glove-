@@ -1,19 +1,35 @@
 {
-  "name": "ai-glove",
+  "name": "temp-app",
+  "version": "0.1.0",
   "private": true,
-  "version": "1.0.0",
-  "description": "AI-powered wearable glove for gesture recognition and communication",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^6.2.0"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "lucide": "^1.31.0",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.0.5",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "framer-motion": "^13.1.0",
+    "lucide-react": "^1.31.0",
+    "next": "14.2.35",
+    "postprocessing": "^6.39.4",
+    "react": "^18",
+    "react-dom": "^18",
     "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
   }
 }
