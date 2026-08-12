@@ -5,8 +5,8 @@ import { voiceService } from '../services/voice.service.js';
 export function renderSentenceSandbox() {
   return `
     <div class="panel sentence-sandbox">
-      <div class="card-header">
-        <span class="icon">📝</span> SENTENCE BUILDER
+      <div class="card-header flex items-center gap-2">
+        <i data-lucide="message-square-plus" class="text-primary"></i> SENTENCE BUILDER
       </div>
       <div class="card-body">
         <div id="sandbox-chips" class="phrase-display">

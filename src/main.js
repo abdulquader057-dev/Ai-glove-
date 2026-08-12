@@ -5,6 +5,7 @@
 import { router } from './router.js';
 import { eventBus } from './utils/events.js';
 import { $ } from './utils/dom.js';
+import { createIcons } from 'lucide';
 
 // ── Services ──
 import { storageService } from './services/storage.service.js';
@@ -109,6 +110,9 @@ function initApp() {
 
   // 7. Set up global event listeners
   setupGlobalListeners();
+
+  // 8. Initialize Lucide icons on boot (for nav/footer)
+  createIcons();
 
   console.log('%c✓ Application initialized', 'color: #00ff88;');
 }

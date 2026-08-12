@@ -5,8 +5,8 @@ import { renderStatusBadge } from './status-badge.js';
 export function renderDeviceStatus() {
   return `
     <div class="panel device-status">
-      <div class="card-header">
-        <span class="icon">📱</span> DEVICE STATUS
+      <div class="card-header flex items-center gap-2">
+        <i data-lucide="smartphone" class="text-primary"></i> DEVICE STATUS
       </div>
       <div class="card-body">
         <div class="status-row"><span>Connection:</span> <span id="ds-conn"></span></div>

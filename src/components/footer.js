@@ -1,56 +1,62 @@
-import { $, $$, on } from '../utils/dom.js';
-import { APP_CONFIG } from '../config/app.config.js';
-import { router } from '../router.js';
+import { $, on } from '../utils/dom.js';
 
 export function render() {
-  const navLinksHtml = APP_CONFIG.navigation.map(link => 
-    `<li><a href="${link.hash}" class="footer-link" data-route="${link.hash}">${link.label}</a></li>`
-  ).join('');
-
-  const linksArr = APP_CONFIG.links 
-    ? Object.entries(APP_CONFIG.links).map(([key, url]) => ({ label: key.charAt(0).toUpperCase() + key.slice(1), url })) 
-    : [
-      { label: 'GitHub', url: '#' },
-      { label: 'Project Demo', url: '#' },
-      { label: 'Team', url: '#' }
-    ];
-
-  const externalLinksHtml = linksArr.map(link => 
-    `<li><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label}</a></li>`
-  ).join('');
-
   return `
-    <footer class="footer panel">
-      <div class="footer-container grid-4">
-        <div class="footer-brand">
-          <div class="nav-logo text-glow">AI GLOVE</div>
-          <p class="tagline">Turning hand movement into meaningful communication.</p>
+    <footer class="footer section-padding bg-surface">
+      <div class="container">
+        <div class="grid-3 mb-16">
+          
+          <!-- Column 1: Brand & About -->
+          <div class="footer-col flex flex-col gap-4">
+            <a href="#home" class="footer-logo flex items-center gap-2" aria-label="AI Glove Home">
+              <i data-lucide="hand-metal" class="text-primary" style="width: 24px; height: 24px;"></i>
+              <span class="text-large text-gradient">AI GLOVE</span>
+            </a>
+            <p class="text-muted">
+              Turn gestures into words with AI. Open source wearable technology built for accessibility and human connection.
+            </p>
+            <div class="social-links flex gap-4 mt-4">
+              <a href="https://github.com" target="_blank" aria-label="GitHub" class="social-btn">
+                <i data-lucide="github"></i>
+              </a>
+              <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="social-btn">
+                <i data-lucide="twitter"></i>
+              </a>
+            </div>
+          </div>
+          
+          <!-- Column 2: Product -->
+          <div class="footer-col flex flex-col gap-4">
+            <h4 class="footer-heading">Product</h4>
+            <a href="#ai-glove" class="footer-link">The Technology</a>
+            <a href="#live-demo" class="footer-link">Live Demo</a>
+            <a href="#ai-ml" class="footer-link">AI Engine</a>
+            <a href="#impact-future" class="footer-link">Roadmap</a>
+          </div>
+          
+          <!-- Column 3: Resources -->
+          <div class="footer-col flex flex-col gap-4">
+            <h4 class="footer-heading">Resources</h4>
+            <a href="#" class="footer-link">Documentation</a>
+            <a href="#" class="footer-link">Build Guide (BOM)</a>
+            <a href="#" class="footer-link">API Reference</a>
+            <a href="#" class="footer-link">Open Source License</a>
+          </div>
+          
         </div>
-        <div class="footer-links-col">
-          <h4 class="footer-heading">Navigation</h4>
-          <ul>${navLinksHtml}</ul>
+        
+        <div class="footer-bottom pt-8 border-t flex justify-between items-center text-sm text-muted">
+          <p>&copy; 2026 AI Glove Project. Released under MIT License.</p>
+          <div class="flex gap-4">
+            <a href="#" class="footer-link">Privacy</a>
+            <a href="#" class="footer-link">Terms</a>
+          </div>
         </div>
-        <div class="footer-links-col">
-          <h4 class="footer-heading">Resources</h4>
-          <ul>${externalLinksHtml}</ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; ${new Date().getFullYear()} AI Glove Project. Built with ♥.</p>
       </div>
     </footer>
   `;
 }
 
 export function init() {
-  const footerLinks = $$('.footer-link');
-  footerLinks.forEach(link => {
-    on(link, 'click', (e) => {
-      e.preventDefault();
-      const route = link.getAttribute('data-route');
-      if (route) {
-        router.navigate(route);
-      }
-    });
-  });
+  // Any footer-specific JS logic
 }

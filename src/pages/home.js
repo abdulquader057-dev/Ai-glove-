@@ -1,4 +1,3 @@
-import { renderHero, initHero } from '../components/hero-section.js';
 import { renderHolographicHand, initHolographicHand } from '../components/holographic-hand.js';
 import { renderPipeline, initPipeline } from '../components/pipeline-flow.js';
 import { openModal } from '../components/modal.js';
@@ -9,139 +8,135 @@ import { $, $$, on, off } from '../utils/dom.js';
 let observer = null;
 
 export function render() {
-  const badges = [
-    { label: 'REAL-TIME RECOGNITION', icon: '⚡', detail: 'Gesture recognition happens in real time as you move your hand. The system processes sensor data continuously and predicts the gesture within milliseconds.' },
-    { label: 'AI POWERED', icon: '🧠', detail: 'Machine learning models analyze complex patterns in sensor data to accurately classify hand gestures.' },
-    { label: 'WIRELESS', icon: '📶', detail: 'Bluetooth Low Energy provides efficient wireless communication between the glove and the connected device.' },
-    { label: 'ACCESSIBILITY', icon: '♿', detail: 'The AI Glove enables gesture-based communication, converting hand movements into text and speech output.' }
+  const features = [
+    { label: 'Real-Time Recognition', icon: 'zap', detail: 'Processes sensor data continuously and predicts gestures in under 300ms.' },
+    { label: 'AI Powered', icon: 'brain-circuit', detail: 'Machine learning models analyze complex patterns for 94% accuracy on 50+ gestures.' },
+    { label: 'Wireless Freedom', icon: 'wifi', detail: 'Bluetooth Low Energy provides efficient wireless communication with 8-hour battery life.' },
+    { label: 'Accessibility First', icon: 'accessibility', detail: 'Built specifically to bridge the communication gap for the 70 million people using sign language.' }
   ];
 
   return `
-    <div class="page home-page">
-      <section class="section hero-section" id="home-hero-section">
-        ${renderHero({
-          title: 'THE FUTURE OF HAND COMMUNICATION',
-          subtitle: 'Turn gestures into words with AI.',
-          description: APP_CONFIG.description || 'An AI-powered wearable that translates hand gestures into text and speech.',
-          primaryAction: { label: 'EXPLORE AI GLOVE', hash: '#ai-glove' },
-          secondaryAction: { label: 'TRY LIVE DEMO', hash: '#live-demo' },
-          badges: badges,
-          visual: renderHolographicHand({ size: 'large', id: 'home-hand' })
-        })}
-      </section>
-
-      <section class="section section-padding problem-section">
-        <div class="container">
-          <div class="section-header text-center animate-fade-in-up">
-            <h2>THE CHALLENGE</h2>
+    <main class="page home-page">
+      <!-- HERO SECTION -->
+      <section class="section hero-section pt-16 pb-16" id="home-hero-section">
+        <div class="container grid-2 items-center">
+          <div class="hero-content flex flex-col gap-6 animate-fade-in-up">
+            <div class="badge inline-flex items-center gap-2 px-4 py-2 border-radius bg-surface w-max">
+              <span class="live-dot" style="width:8px;height:8px;border-radius:50%;background:var(--color-status-connected);"></span> 
+              Open Source Hardware
+            </div>
+            <h1 class="text-5xl font-bold">Turn gestures into words with AI.</h1>
+            <p class="text-xl text-muted max-w-md">
+              A wearable glove that recognizes hand movements and speaks for you. 
+              Bridging the gap between gesture and digital communication.
+            </p>
+            <div class="flex gap-4 mt-4">
+              <button class="btn btn-primary" data-navigate="#live-demo">
+                Try live demo <i data-lucide="arrow-right"></i>
+              </button>
+              <button class="btn btn-secondary" data-navigate="#ai-glove">
+                Explore the tech
+              </button>
+            </div>
           </div>
-          <div class="split-layout">
-            <div class="split-left animate-fade-in-up" style="animation-delay: 0.1s">
-              <h3>Communication should not depend entirely on spoken language or a screen.</h3>
-              <p>There are many situations where voice interfaces or screens are impractical or inaccessible. Hand gestures represent a natural, intuitive mode of expression that bridges gaps when traditional communication methods fall short.</p>
-              <div class="icon-cards-vertical">
-                <div class="icon-card-row">
-                  <span class="icon">🌍</span>
-                  <span>Millions rely on non-verbal communication</span>
-                </div>
-                <div class="icon-card-row">
-                  <span class="icon">🔇</span>
-                  <span>Not everyone can use voice-based interfaces</span>
-                </div>
-                <div class="icon-card-row">
-                  <span class="icon">🤝</span>
-                  <span>Bridging the gap between gesture and digital communication</span>
-                </div>
-              </div>
-            </div>
-            <div class="split-right animate-fade-in-up" style="animation-delay: 0.2s">
-              <div class="subtle-visual">
-                <div class="connection-nodes">
-                  <div class="node disconnected">🗣️</div>
-                  <div class="node disconnected">📱</div>
-                  <div class="node center-node">✋</div>
-                  <div class="node disconnected">💻</div>
-                  <div class="node disconnected">🔊</div>
-                </div>
-              </div>
-            </div>
+          <div class="hero-visual animate-fade-in-up" style="animation-delay: 0.2s">
+            ${renderHolographicHand({ size: 'large', id: 'home-hand' })}
           </div>
         </div>
       </section>
 
-      <section class="section section-padding solution-section alt-bg">
+      <!-- FEATURES SECTION -->
+      <section class="section section-padding bg-surface border-t">
         <div class="container">
-          <div class="section-header text-center animate-fade-in-up">
-            <h2>THE SOLUTION</h2>
-            <p class="section-desc">An AI-powered wearable that captures hand gestures and converts them into understandable text and speech.</p>
+          <div class="section-header text-center mb-12 animate-fade-in-up">
+            <h2>The Challenge & Solution</h2>
+            <p class="text-muted max-w-md mx-auto mt-4">Communication should not depend entirely on spoken language or a screen. Our hardware aims to restore seamless interaction.</p>
+          </div>
+          
+          <div class="grid-4">
+            ${features.map((f, i) => `
+              <div class="card p-6 animate-fade-in-up" style="animation-delay: ${0.1 * i}s">
+                <div class="card-icon mb-4 text-primary">
+                  <i data-lucide="${f.icon}" style="width: 32px; height: 32px;"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">${f.label}</h3>
+                <p class="text-sm text-muted">${f.detail}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>
+
+      <!-- PIPELINE SECTION -->
+      <section class="section section-padding">
+        <div class="container">
+          <div class="section-header text-center mb-12 animate-fade-in-up">
+            <h2>How It Works</h2>
+            <p class="text-muted max-w-md mx-auto mt-4">From physical movement to digital intelligence.</p>
           </div>
           <div class="pipeline-container animate-fade-in-up" style="animation-delay: 0.1s">
-            ${renderPipeline({ direction: 'horizontal', steps: 5, id: 'solution-pipeline', clickable: false })}
-          </div>
-          <div class="pipeline-explanation text-center animate-fade-in-up" style="animation-delay: 0.2s">
-            <p>From physical movement to digital intelligence.</p>
+            ${renderPipeline({ direction: 'horizontal', steps: 6, id: 'home-pipeline', clickable: true })}
           </div>
         </div>
       </section>
 
-      <section class="section section-padding tech-section">
+      <!-- HARDWARE SPECS -->
+      <section class="section section-padding bg-surface border-t">
         <div class="container">
-          <div class="section-header text-center animate-fade-in-up">
-            <h2>TECHNOLOGY</h2>
+          <div class="section-header text-center mb-12 animate-fade-in-up">
+            <h2>Hardware Architecture</h2>
           </div>
           <div class="grid-3">
-            <div class="tech-card animate-fade-in-up" data-tech="flex" tabindex="0">
-              <div class="tech-icon">🧲</div>
-              <h4>5 FLEX SENSORS</h4>
-              <p>One sensor per finger detecting bending.</p>
+            <div class="card p-6 tech-card animate-fade-in-up" data-tech="flex" tabindex="0">
+              <div class="card-icon mb-4 text-primary"><i data-lucide="hand"></i></div>
+              <h4 class="text-lg font-bold mb-2">5 Flex Sensors</h4>
+              <p class="text-sm text-muted">Resistance range: 10kΩ – 50kΩ. Detects bend angle with ±2° accuracy per finger.</p>
             </div>
-            <div class="tech-card animate-fade-in-up" data-tech="imu" tabindex="0" style="animation-delay: 0.1s">
-              <div class="tech-icon">📱</div>
-              <h4>6-AXIS IMU</h4>
-              <p>Captures hand movement and orientation.</p>
+            <div class="card p-6 tech-card animate-fade-in-up" data-tech="imu" tabindex="0" style="animation-delay: 0.1s">
+              <div class="card-icon mb-4 text-primary"><i data-lucide="smartphone"></i></div>
+              <h4 class="text-lg font-bold mb-2">6-Axis IMU</h4>
+              <p class="text-sm text-muted">Captures hand movement and orientation in 3D space with minimal drift.</p>
             </div>
-            <div class="tech-card animate-fade-in-up" data-tech="controller" tabindex="0" style="animation-delay: 0.2s">
-              <div class="tech-icon">🔧</div>
-              <h4>XIAO nRF52840</h4>
-              <p>Ultra-compact main controller.</p>
+            <div class="card p-6 tech-card animate-fade-in-up" data-tech="controller" tabindex="0" style="animation-delay: 0.2s">
+              <div class="card-icon mb-4 text-primary"><i data-lucide="cpu"></i></div>
+              <h4 class="text-lg font-bold mb-2">XIAO nRF52840</h4>
+              <p class="text-sm text-muted">Ultra-compact main controller handling data aggregation and ML inference.</p>
             </div>
-            <div class="tech-card animate-fade-in-up" data-tech="ble" tabindex="0" style="animation-delay: 0.3s">
-              <div class="tech-icon">📶</div>
-              <h4>BLUETOOTH LE</h4>
-              <p>Efficient wireless data transmission.</p>
+            <div class="card p-6 tech-card animate-fade-in-up" data-tech="ble" tabindex="0" style="animation-delay: 0.3s">
+              <div class="card-icon mb-4 text-primary"><i data-lucide="bluetooth"></i></div>
+              <h4 class="text-lg font-bold mb-2">Bluetooth LE</h4>
+              <p class="text-sm text-muted">Streams packed sensor data continuously to the client device at 50Hz.</p>
             </div>
-            <div class="tech-card animate-fade-in-up" data-tech="ml" tabindex="0" style="animation-delay: 0.4s">
-              <div class="tech-icon">🧠</div>
-              <h4>ML INFERENCE</h4>
-              <p>Pattern recognition from sensor data.</p>
+            <div class="card p-6 tech-card animate-fade-in-up" data-tech="ml" tabindex="0" style="animation-delay: 0.4s">
+              <div class="card-icon mb-4 text-primary"><i data-lucide="network"></i></div>
+              <h4 class="text-lg font-bold mb-2">ML Inference</h4>
+              <p class="text-sm text-muted">TensorFlow Lite models classify the current gesture vector into text.</p>
             </div>
-            <div class="tech-card animate-fade-in-up" data-tech="voice" tabindex="0" style="animation-delay: 0.5s">
-              <div class="tech-icon">🔊</div>
-              <h4>VOICE OUTPUT</h4>
-              <p>Text-to-speech for recognized gestures.</p>
+            <div class="card p-6 tech-card animate-fade-in-up" data-tech="voice" tabindex="0" style="animation-delay: 0.5s">
+              <div class="card-icon mb-4 text-primary"><i data-lucide="volume-2"></i></div>
+              <h4 class="text-lg font-bold mb-2">Voice Output</h4>
+              <p class="text-sm text-muted">Web Speech API synthesizes text into natural-sounding speech.</p>
             </div>
           </div>
         </div>
       </section>
-
-      <section class="section section-padding pipeline-section alt-bg">
-        <div class="container">
-          <div class="section-header text-center animate-fade-in-up">
-            <h2>COMPLETE PIPELINE</h2>
-          </div>
-          <div class="full-pipeline-container animate-fade-in-up" style="animation-delay: 0.1s">
-            ${renderPipeline({ direction: 'vertical', steps: 8, id: 'home-pipeline', clickable: true })}
-          </div>
+      
+      <!-- CTA SECTION -->
+      <section class="section section-padding text-center">
+        <div class="container animate-fade-in-up">
+          <h2 class="text-4xl font-bold mb-6">Ready to see it in action?</h2>
+          <p class="text-xl text-muted max-w-md mx-auto mb-8">Test the AI gesture recognition pipeline right in your browser.</p>
+          <button class="btn btn-primary btn-lg" data-navigate="#live-demo">
+            Launch Live Demo <i data-lucide="play"></i>
+          </button>
         </div>
       </section>
-    </div>
+    </main>
   `;
 }
 
 export function init() {
-  initHero('#home-hero-section');
   initHolographicHand('home-hand');
-  initPipeline('solution-pipeline');
   initPipeline('home-pipeline');
   initTooltips();
 

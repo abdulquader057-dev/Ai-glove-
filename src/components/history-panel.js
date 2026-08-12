@@ -6,9 +6,9 @@ import { historyService } from '../services/history.service.js';
 export function renderHistoryPanel({ collapsible = true } = {}) {
   return `
     <div class="panel history-panel">
-      <div class="card-header" ${collapsible ? 'id="history-header" style="cursor:pointer;"' : ''}>
-        <span class="icon">📜</span> GESTURE HISTORY
-        <span id="history-count-badge" class="badge badge-cyan">0</span>
+      <div class="card-header flex items-center gap-2" ${collapsible ? 'id="history-header" style="cursor:pointer;"' : ''}>
+        <i data-lucide="history" class="text-primary"></i> GESTURE HISTORY
+        <span id="history-count-badge" class="badge badge-cyan ml-auto">0</span>
       </div>
       <div id="history-content" class="card-body">
         <div class="table-container">

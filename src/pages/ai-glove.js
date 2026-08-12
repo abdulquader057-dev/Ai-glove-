@@ -43,9 +43,9 @@ export function render() {
         <div class="container">
           <div class="grid-2">
             <div class="component-card animate-fade-in-up">
-              <div class="card-header">
-                <span class="icon">🧲</span>
-                <h3>FLEX SENSORS</h3>
+              <div class="card-header flex items-center gap-2 mb-4">
+                <i data-lucide="hand" class="text-primary" style="width: 32px; height: 32px;"></i>
+                <h3 class="text-lg font-bold">FLEX SENSORS</h3>
               </div>
               <p>Flex sensors detect the bending of individual fingers. The AI Glove uses 5 flex sensors — one for each finger.</p>
               <div class="sensor-bars flex-sensor-bars">
@@ -58,9 +58,9 @@ export function render() {
             </div>
 
             <div class="component-card animate-fade-in-up" style="animation-delay: 0.1s">
-              <div class="card-header">
-                <span class="icon">📱</span>
-                <h3>6-AXIS IMU</h3>
+              <div class="card-header flex items-center gap-2 mb-4">
+                <i data-lucide="smartphone" class="text-primary" style="width: 32px; height: 32px;"></i>
+                <h3 class="text-lg font-bold">6-AXIS IMU</h3>
               </div>
               <p>The onboard 6-axis IMU captures hand movement and orientation information.</p>
               <div class="sensor-bars imu-bars">
@@ -71,9 +71,9 @@ export function render() {
             </div>
 
             <div class="component-card animate-fade-in-up" style="animation-delay: 0.2s">
-              <div class="card-header">
-                <span class="icon">🔧</span>
-                <h3>XIAO nRF52840 SENSE</h3>
+              <div class="card-header flex items-center gap-2 mb-4">
+                <i data-lucide="cpu" class="text-primary" style="width: 32px; height: 32px;"></i>
+                <h3 class="text-lg font-bold">XIAO nRF52840 SENSE</h3>
               </div>
               <p>The XIAO nRF52840 Sense acts as the glove's main controller, collecting sensor data and transmitting it wirelessly.</p>
               <div class="role-diagram">
@@ -86,9 +86,9 @@ export function render() {
             </div>
 
             <div class="component-card animate-fade-in-up" style="animation-delay: 0.3s">
-              <div class="card-header">
-                <span class="icon">📶</span>
-                <h3>BLUETOOTH LOW ENERGY</h3>
+              <div class="card-header flex items-center gap-2 mb-4">
+                <i data-lucide="bluetooth" class="text-primary" style="width: 32px; height: 32px;"></i>
+                <h3 class="text-lg font-bold">BLUETOOTH LOW ENERGY</h3>
               </div>
               <p>Bluetooth Low Energy provides wireless communication between the glove and the connected device.</p>
               <div class="connection-flow">

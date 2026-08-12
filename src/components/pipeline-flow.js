@@ -14,14 +14,14 @@ const STEP_DETAILS = {
 
 export function renderPipeline({ steps, direction = 'vertical', animated = true, clickable = true } = {}) {
   const defaultSteps = [
-    { id: 'hand', icon: '✋', label: 'Hand Movement', subtitle: 'Physical gesture' },
-    { id: 'sensors', icon: '📡', label: 'Flex Sensors + IMU', subtitle: '5 flex + 6-axis' },
-    { id: 'xiao', icon: '🔧', label: 'XIAO nRF52840', subtitle: 'Main controller' },
-    { id: 'ble', icon: '📶', label: 'Bluetooth LE', subtitle: 'Wireless transmission' },
-    { id: 'ml', icon: '🧠', label: 'ML Model', subtitle: 'Pattern recognition' },
-    { id: 'gesture', icon: '🎯', label: 'Gesture Recognition', subtitle: 'Classification' },
-    { id: 'text', icon: '📝', label: 'Text Output', subtitle: 'Display result' },
-    { id: 'voice', icon: '🔊', label: 'Voice Output', subtitle: 'Speech synthesis' }
+    { id: 'hand', icon: '<i data-lucide="hand"></i>', label: 'Hand Movement', subtitle: 'Physical gesture' },
+    { id: 'sensors', icon: '<i data-lucide="satellite-dish"></i>', label: 'Flex Sensors + IMU', subtitle: '5 flex + 6-axis' },
+    { id: 'xiao', icon: '<i data-lucide="cpu"></i>', label: 'XIAO nRF52840', subtitle: 'Main controller' },
+    { id: 'ble', icon: '<i data-lucide="bluetooth"></i>', label: 'Bluetooth LE', subtitle: 'Wireless transmission' },
+    { id: 'ml', icon: '<i data-lucide="network"></i>', label: 'ML Model', subtitle: 'Pattern recognition' },
+    { id: 'gesture', icon: '<i data-lucide="target"></i>', label: 'Gesture Recognition', subtitle: 'Classification' },
+    { id: 'text', icon: '<i data-lucide="file-text"></i>', label: 'Text Output', subtitle: 'Display result' },
+    { id: 'voice', icon: '<i data-lucide="volume-2"></i>', label: 'Voice Output', subtitle: 'Speech synthesis' }
   ];
 
   const pipelineSteps = Array.isArray(steps) ? steps : (steps && typeof steps === 'number' ? defaultSteps.slice(0, steps) : defaultSteps);

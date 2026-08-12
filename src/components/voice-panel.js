@@ -6,8 +6,8 @@ import { storageService } from '../services/storage.service.js';
 export function renderVoicePanel() {
   return `
     <div class="panel voice-panel">
-      <div class="card-header">
-        <span class="icon">🔊</span> VOICE OUTPUT
+      <div class="card-header flex items-center gap-2">
+        <i data-lucide="volume-2" class="text-primary"></i> VOICE OUTPUT
       </div>
       <div class="card-body">
         <div id="voice-last-text" class="last-spoken-text">---</div>

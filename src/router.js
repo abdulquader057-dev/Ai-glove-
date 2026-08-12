@@ -1,4 +1,5 @@
 import { eventBus } from './utils/events.js';
+import { createIcons } from 'lucide';
 
 class Router {
   constructor() {
@@ -98,6 +99,9 @@ class Router {
     // Update nav and title
     this.updateActiveNav(hash);
     document.title = pageConfig.title || this.getPageTitle(hash);
+
+    // Initialize Lucide icons on the newly rendered HTML
+    createIcons();
 
     eventBus.emit('route-change', { route: hash });
   }

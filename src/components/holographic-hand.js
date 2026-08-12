@@ -14,7 +14,9 @@ export function renderHolographicHand({ size = 'large', interactive = false, sho
       <!-- Three.js canvas will be injected here -->
       ${showGesture ? `
         <div class="gesture-overlay">
-          <span class="gesture-name text-glow">Waiting...</span>
+          <span class="gesture-name text-glow flex items-center gap-2">
+            <i data-lucide="activity" style="width: 16px; height: 16px;"></i> System Ready
+          </span>
           <span class="gesture-confidence"></span>
         </div>
       ` : ''}

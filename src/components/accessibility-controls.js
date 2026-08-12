@@ -6,8 +6,8 @@ import { voiceService } from '../services/voice.service.js';
 export function renderAccessibilityControls() {
   return `
     <div class="panel a11y-controls">
-      <div class="card-header">
-        <span class="icon">👁️</span> ACCESSIBILITY SETTINGS
+      <div class="card-header flex items-center gap-2">
+        <i data-lucide="eye" class="text-primary"></i> ACCESSIBILITY SETTINGS
       </div>
       <div class="card-body">
         <div class="controls-row">

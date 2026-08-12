@@ -5,8 +5,8 @@ import { formatPercentage } from '../utils/format.js';
 export function renderPredictionPanel() {
   return `
     <div class="panel prediction-panel">
-      <div class="card-header">
-        <span class="icon">🧠</span> DETECTED GESTURE
+      <div class="card-header flex items-center gap-2">
+        <i data-lucide="target" class="text-primary"></i> DETECTED GESTURE
       </div>
       <div class="card-body">
         <div id="prediction-gesture-name" class="prediction-gesture">---</div>

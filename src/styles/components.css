@@ -367,7 +367,11 @@ input:checked + .slider:before {
   .navbar { flex-wrap: wrap; }
   .nav-links { display: none; } /* Handled by mobile menu */
   .hamburger { display: block; }
+  .hidden-mobile { display: none !important; }
+  .display-mobile { display: flex !important; }
 }
+
+.display-mobile { display: none; }
 
 /* Misc */
 .toast {

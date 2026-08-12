@@ -1,84 +1,75 @@
-import { $, $$, on, off, addClass, removeClass } from '../utils/dom.js';
-import { eventBus } from '../utils/events.js';
-import { APP_CONFIG } from '../config/app.config.js';
+import { $, on } from '../utils/dom.js';
 import { router } from '../router.js';
 
 export function render() {
-  const linksHtml = APP_CONFIG.navigation.map(link => 
-    `<a href="${link.hash}" class="nav-link" data-route="${link.hash}">${link.label}</a>`
-  ).join('');
-
   return `
-    <nav class="navbar glass">
-      <div class="nav-container">
-        <a href="#home" class="nav-logo text-glow" data-route="home">AI GLOVE</a>
-        <div class="nav-links">
-          ${linksHtml}
-          <button class="btn btn-primary btn-sm nav-cta" data-route="#ai-glove">GET STARTED</button>
+    <nav class="navbar glass sticky z-sticky">
+      <div class="container flex justify-between items-center w-full">
+        
+        <!-- Logo -->
+        <a href="#home" class="nav-logo flex items-center gap-2" aria-label="AI Glove Home">
+          <i data-lucide="hand-metal" class="text-primary" style="width: 24px; height: 24px;"></i>
+          <span class="text-large text-gradient">AI GLOVE</span>
+        </a>
+        
+        <!-- Desktop Links -->
+        <div class="nav-links flex items-center gap-6 hidden-mobile">
+          <a href="#ai-glove" data-route="#ai-glove" class="nav-item">The Tech</a>
+          <a href="#ai-ml" data-route="#ai-ml" class="nav-item">AI Engine</a>
+          <a href="#accessibility" data-route="#accessibility" class="nav-item">Accessibility</a>
+          <a href="#impact-future" data-route="#impact-future" class="nav-item">Impact</a>
         </div>
-        <button class="nav-hamburger">
-          <span></span><span></span><span></span>
-        </button>
+        
+        <!-- CTA & Hamburger -->
+        <div class="nav-actions flex items-center gap-4">
+          <button class="btn btn-primary hidden-mobile" data-navigate="#live-demo">
+            Try Demo <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+          </button>
+          
+          <button id="mobile-menu-btn" class="hamburger icon-btn display-mobile" aria-label="Toggle navigation menu">
+            <i data-lucide="menu"></i>
+          </button>
+        </div>
       </div>
-      <div class="nav-mobile-menu">
-        ${linksHtml}
-        <button class="btn btn-primary btn-sm nav-cta" data-route="#ai-glove">GET STARTED</button>
+      
+      <!-- Mobile Menu Overlay -->
+      <div id="mobile-menu" class="mobile-menu glass hidden">
+        <div class="mobile-menu-content flex flex-col gap-4 p-4">
+          <a href="#ai-glove" class="mobile-nav-item">The Tech</a>
+          <a href="#ai-ml" class="mobile-nav-item">AI Engine</a>
+          <a href="#accessibility" class="mobile-nav-item">Accessibility</a>
+          <a href="#impact-future" class="mobile-nav-item">Impact</a>
+          <button class="btn btn-primary mt-4 w-full" data-navigate="#live-demo">Try Demo</button>
+        </div>
       </div>
     </nav>
   `;
 }
 
 export function init() {
-  const navbar = $('.navbar');
-  const hamburger = $('.nav-hamburger');
-  const mobileMenu = $('.nav-mobile-menu');
-  const navLinks = $$('.nav-link, .nav-logo, .nav-cta');
-
-  if (hamburger) {
-    on(hamburger, 'click', () => {
-      if (mobileMenu.classList.contains('active')) {
-        removeClass(mobileMenu, 'active');
-        removeClass(hamburger, 'active');
-      } else {
-        addClass(mobileMenu, 'active');
-        addClass(hamburger, 'active');
+  const mobileMenuBtn = $('#mobile-menu-btn');
+  const mobileMenu = $('#mobile-menu');
+  
+  if (mobileMenuBtn && mobileMenu) {
+    on(mobileMenuBtn, 'click', () => {
+      mobileMenu.classList.toggle('hidden');
+      const icon = mobileMenu.classList.contains('hidden') ? 'menu' : 'x';
+      
+      // Update icon using lucide
+      mobileMenuBtn.innerHTML = `<i data-lucide="${icon}"></i>`;
+      if (window.lucide) {
+        window.lucide.createIcons({ root: mobileMenuBtn });
       }
+    });
+    
+    // Close menu when clicking a link
+    const links = document.querySelectorAll('.mobile-nav-item');
+    links.forEach(link => {
+      on(link, 'click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenuBtn.innerHTML = `<i data-lucide="menu"></i>`;
+        if (window.lucide) window.lucide.createIcons({ root: mobileMenuBtn });
+      });
     });
   }
-
-  navLinks.forEach(link => {
-    on(link, 'click', (e) => {
-      e.preventDefault();
-      const route = link.getAttribute('data-route');
-      if (route) {
-        router.navigate(route);
-      }
-      if (mobileMenu) removeClass(mobileMenu, 'active');
-      if (hamburger) removeClass(hamburger, 'active');
-    });
-  });
-
-  on(window, 'scroll', () => {
-    if (window.scrollY > 50) {
-      addClass(navbar, 'navbar-scrolled');
-    } else {
-      removeClass(navbar, 'navbar-scrolled');
-    }
-  });
-
-  eventBus.on('route-change', (hash) => {
-    updateActiveLink(hash);
-  });
-}
-
-export function updateActiveLink(hash) {
-  const navLinks = $$('.nav-link');
-  const activeHash = hash.replace('#', '') || 'home';
-  navLinks.forEach(link => {
-    if (link.getAttribute('data-route') === activeHash) {
-      addClass(link, 'active');
-    } else {
-      removeClass(link, 'active');
-    }
-  });
 }

@@ -6,8 +6,8 @@ import { BLE_CONFIG, isWebBluetoothSupported, BLE_ERRORS } from '../config/ble.c
 export function renderConnectionPanel() {
   return `
     <div class="panel connection-panel">
-      <div class="card-header">
-        <span class="icon">📡</span> CONNECTION
+      <div class="card-header flex items-center gap-2">
+        <i data-lucide="radio" class="text-primary"></i> CONNECTION
       </div>
       <div class="card-body">
         <div id="ble-not-supported" class="badge badge-red" style="display:none;">Web Bluetooth Not Supported</div>
