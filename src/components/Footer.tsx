@@ -1,3 +1,5 @@
+"use client";
+
 import { GitBranch, Hash, Users, MessageSquare } from "lucide-react";
 
 export default function Footer() {
