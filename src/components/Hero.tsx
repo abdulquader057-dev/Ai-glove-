@@ -1,7 +1,12 @@
 "use client";
 
 import { ArrowRight, FileText } from "lucide-react";
-import AIGlove3D from "./AIGlove3D";
+import dynamic from 'next/dynamic';
+
+const AIGlove3D = dynamic(() => import("./AIGlove3D"), { 
+  ssr: false,
+  loading: () => <div className="w-full aspect-square md:h-[600px] flex items-center justify-center bg-bg-secondary rounded-2xl animate-pulse"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>
+});
 import { motion } from "framer-motion";
 
 export default function Hero() {
