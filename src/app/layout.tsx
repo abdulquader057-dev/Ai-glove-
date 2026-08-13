@@ -1,30 +1,49 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Orbitron, Rajdhani, Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-orbitron",
+});
+
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-rajdhani",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
-  title: "AI Glove — Turn gestures into words with AI",
-  description: "AI-powered wearable glove that detects hand gestures in real time and converts them into text and speech. Open source hardware for accessibility.",
+  metadataBase: new URL('https://ai-glove.vercel.app'),
+  title: "Sensasign AI — Wearable Intelligence. Gesture to Voice.",
+  description: "Sensasign AI detects hand gestures in real-time via hardware flex sensors & IMU on XIAO nRF52840, translating gestures to instant voice output.",
   openGraph: {
-    title: "AI Glove",
-    description: "Turn gestures into words with AI",
+    title: "Sensasign AI",
+    description: "Wearable Intelligence. Gesture to Voice.",
     images: ["/og-image.jpg"],
     type: "website",
     url: "https://ai-glove.vercel.app/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Glove",
-    description: "AI-powered wearable glove that detects hand gestures in real time and converts them into text and speech.",
+    title: "Sensasign AI",
+    description: "Wearable Intelligence. Gesture to Voice.",
     images: ["/og-image.jpg"],
   },
-  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+  }
 };
 
 export const viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#030712",
 };
 
 export default function RootLayout({
@@ -34,34 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://ai-glove.vercel.app/" />
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Product",
-              "name": "AI Glove",
-              "description": "AI-powered wearable glove for gesture recognition",
-              "brand": {
-                "@type": "Brand",
-                "name": "AI Glove"
-              },
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD",
-                "availability": "https://schema.org/InStock"
-              }
-            })
-          }}
-        />
-      </head>
-      <body className={`${inter.variable} font-sans antialiased bg-bg-primary text-text-primary`}>
-        <a href="#main-content" className="skip-link">Skip to content</a>
+      <body className={`${orbitron.variable} ${rajdhani.variable} ${inter.variable} font-inter bg-[#030712] text-white min-h-screen antialiased selection:bg-[#00f0ff] selection:text-[#030712]`}>
         {children}
       </body>
     </html>

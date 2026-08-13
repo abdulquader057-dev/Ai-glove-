@@ -1,102 +1,76 @@
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import FeatureGrid from "@/components/FeatureGrid";
-import InteractivePipeline from "@/components/InteractivePipeline";
-import HardwareGrid from "@/components/HardwareGrid";
-import SimulatorWidget from "@/components/SimulatorWidget";
-import Footer from "@/components/Footer";
+'use client';
+
+import React, { useState } from 'react';
+import { Navbar } from '@/components/Navbar';
+import { BackgroundCanvas } from '@/components/BackgroundCanvas';
+import { AuthModal } from '@/components/AuthModal';
+import { HardwareDashboard } from '@/components/HardwareDashboard';
+import { HowItWorksTimeline } from '@/components/HowItWorksTimeline';
+import { SavedGesturesManager } from '@/components/SavedGesturesManager';
+import { FeatureGrid } from '@/components/FeatureGrid';
+import { HolographicGloveView } from '@/components/HolographicGloveView';
+import { GestureManual } from '@/components/GestureManual';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<string>('hardware');
+  const { activeGloveSerial } = useAuthStore();
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
+    <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-[#00f0ff] selection:text-[#030712]">
       
-      <main id="main-content" className="flex-grow">
-        <Hero />
-        
-        {/* Problem Section */}
-        <section id="problem" className="py-20 md:py-32 bg-white">
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-16 text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                Communication should not depend on spoken language
-              </h2>
-              <p className="text-lg text-text-secondary">
-                There are many situations where voice interfaces or screens are impractical or inaccessible.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-bg-secondary p-8 rounded-xl text-center">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary mx-auto mb-6 shadow-sm">
-                  <span className="text-xl" role="img" aria-label="Globe">🌍</span>
-                </div>
-                <h4 className="text-lg font-semibold text-text-primary mb-3">70 million people worldwide</h4>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  use sign language as their primary form of communication.
-                </p>
-              </div>
-              <div className="bg-bg-secondary p-8 rounded-xl text-center">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary mx-auto mb-6 shadow-sm">
-                  <span className="text-xl" role="img" aria-label="Muted">🔇</span>
-                </div>
-                <h4 className="text-lg font-semibold text-text-primary mb-3">Voice interfaces exclude many</h4>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  Noisy environments, speech impairments, and privacy concerns make voice control impractical.
-                </p>
-              </div>
-              <div className="bg-bg-secondary p-8 rounded-xl text-center">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary mx-auto mb-6 shadow-sm">
-                  <span className="text-xl" role="img" aria-label="Users">👥</span>
-                </div>
-                <h4 className="text-lg font-semibold text-text-primary mb-3">Bridging the communication gap</h4>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  Translating gestures into digital text and speech creates inclusive, seamless interaction.
-                </p>
-              </div>
-            </div>
-            
-            <div className="mt-12 text-center">
-              <a href="#pipeline" className="inline-flex items-center gap-2 text-accent hover:text-accent-hover font-medium transition-colors">
-                Learn how it works <span aria-hidden="true">&rarr;</span>
-              </a>
-            </div>
-          </div>
-        </section>
+      {/* 1. MANDATORY ANIMATED BACKGROUND */}
+      <BackgroundCanvas />
 
-        <FeatureGrid />
-        <InteractivePipeline />
-        <HardwareGrid />
-        <SimulatorWidget />
+      {/* 2. AUTH MODAL */}
+      <AuthModal />
 
-        {/* CTA Section */}
-        <section className="bg-bg-dark text-text-on-dark py-24 text-center">
-          <div className="max-w-3xl mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Help us build the future</h2>
-            <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">
-              AI Glove is open source. Contribute hardware designs, train new gestures, or fork the project.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <a 
-                href="https://github.com/abdulquader057-dev/Ai-glove-"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white hover:bg-slate-100 text-primary px-8 py-4 rounded-md font-medium transition-colors"
-              >
-                Contribute on GitHub
-              </a>
-              <a 
-                href="#"
-                className="bg-transparent border border-white hover:bg-white/10 text-white px-8 py-4 rounded-md font-medium transition-colors"
-              >
-                Join our Discord
-              </a>
-            </div>
-          </div>
-        </section>
+      {/* 3. FIXED TOP NAVIGATION BAR */}
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* 4. MAIN CONTENT AREA */}
+      <main id="main-content" className="relative z-10 pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex-1 w-full">
+        {activeTab === 'hardware' && <HardwareDashboard />}
+        {activeTab === 'how-it-works' && <HowItWorksTimeline />}
+        {activeTab === 'saved-gestures' && <SavedGesturesManager />}
+        {activeTab === 'features' && <FeatureGrid />}
+        {activeTab === '3d-view' && <HolographicGloveView />}
+        {activeTab === 'manual' && <GestureManual />}
       </main>
 
-      <Footer />
+      {/* 5. FUTURISTIC FOOTER */}
+      <footer className="relative z-10 border-t border-[#00f0ff]/20 bg-[#030712]/90 backdrop-blur-md py-8 px-4 text-xs font-inter text-[#94a3b8]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded border border-[#00f0ff] bg-[#0a0f1e] flex items-center justify-center font-orbitron font-bold text-[#00f0ff]">
+              S
+            </div>
+            <div>
+              <span className="font-orbitron font-bold text-white tracking-widest block">
+                SENSASIGN AI
+              </span>
+              <span className="text-[10px] text-[#94a3b8] font-rajdhani">
+                Wearable Intelligence. Gesture to Voice.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 font-rajdhani text-xs tracking-wider">
+            <button onClick={() => setActiveTab('hardware')} className="hover:text-[#00f0ff]">HARDWARE</button>
+            <button onClick={() => setActiveTab('how-it-works')} className="hover:text-[#00f0ff]">HOW IT WORKS</button>
+            <button onClick={() => setActiveTab('3d-view')} className="hover:text-[#00f0ff]">3D VIEW</button>
+            <button onClick={() => setActiveTab('manual')} className="hover:text-[#00f0ff]">MANUAL</button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-orbitron text-[#00f0ff] bg-[#00f0ff]/10 px-2.5 py-1 rounded border border-[#00f0ff]/30">
+              SERIAL: {activeGloveSerial || 'SSG-2050-X99'}
+            </span>
+            <span>© 2026 Sensasign AI Inc.</span>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }

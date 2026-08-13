@@ -9,42 +9,73 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          DEFAULT: "#0f172a", // slate-900
-          hover: "#1e293b",   // slate-800
+        bg: {
+          primary: "#030712",
+          secondary: "#0a0f1e",
+          card: "rgba(10, 15, 30, 0.7)",
         },
         accent: {
-          DEFAULT: "#0ea5e9", // sky-500
-          hover: "#0284c7",   // sky-600
-        },
-        bg: {
-          primary: "#ffffff",
-          secondary: "#f8fafc", // slate-50
-          dark: "#0f172a",
+          cyan: "#00f0ff",
+          blue: "#0066ff",
+          purple: "#8b5cf6",
+          pink: "#ec4899",
         },
         text: {
-          primary: "#0f172a", // slate-900
-          secondary: "#475569", // slate-600
-          muted: "#94a3b8", // slate-400
-          onDark: "#f8fafc",
+          primary: "#ffffff",
+          secondary: "#94a3b8",
         },
         border: {
-          DEFAULT: "#e2e8f0", // slate-200
-          hover: "#cbd5e1", // slate-300
+          glow: "rgba(0, 240, 255, 0.25)",
         },
-        success: "#10b981",
-        warning: "#f59e0b",
-        danger: "#ef4444",
-      },
-      boxShadow: {
-        sm: "0 1px 2px rgba(0,0,0,0.05)",
-        md: "0 4px 6px rgba(0,0,0,0.07)",
-        lg: "0 10px 15px rgba(0,0,0,0.1)",
-        xl: "0 20px 25px rgba(0,0,0,0.1)",
+        status: {
+          success: "#10b981",
+          danger: "#ef4444",
+          warning: "#f59e0b",
+        }
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
+        orbitron: ["var(--font-orbitron)", "sans-serif"],
+        rajdhani: ["var(--font-rajdhani)", "sans-serif"],
+        inter: ["var(--font-inter)", "sans-serif"],
+        mono: ["var(--font-orbitron)", "monospace"],
       },
+      boxShadow: {
+        cyanGlow: "0 0 30px rgba(0, 240, 255, 0.3)",
+        cyanGlowHover: "0 5px 40px rgba(0, 240, 255, 0.5)",
+        dangerGlow: "0 0 30px rgba(239, 68, 68, 0.3)",
+        purpleGlow: "0 0 30px rgba(139, 92, 246, 0.3)",
+        cardGlow: "0 0 25px rgba(0, 240, 255, 0.12)",
+      },
+      animation: {
+        'grid-drift': 'gridDrift 20s linear infinite',
+        'pulse-radial': 'pulseRadial 4s ease-in-out infinite',
+        'particle-float': 'particleFloat 12s ease-in-out infinite',
+        'node-pulse': 'nodePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'scanline': 'scanline 8s linear infinite',
+      },
+      keyframes: {
+        gridDrift: {
+          '0%': { transform: 'translate(0, 0)' },
+          '100%': { transform: 'translate(50px, 50px)' },
+        },
+        pulseRadial: {
+          '0%, 100%': { opacity: '0.06', transform: 'scale(1)' },
+          '50%': { opacity: '0.12', transform: 'scale(1.15)' },
+        },
+        particleFloat: {
+          '0%': { transform: 'translateY(100vh) scale(0.5)', opacity: '0' },
+          '50%': { opacity: '0.8' },
+          '100%': { transform: 'translateY(-10vh) scale(1.2)', opacity: '0' },
+        },
+        nodePulse: {
+          '0%, 100%': { transform: 'scale(1)', opacity: '1', filter: 'drop-shadow(0 0 8px #00f0ff)' },
+          '50%': { transform: 'scale(1.4)', opacity: '0.6', filter: 'drop-shadow(0 0 16px #ec4899)' },
+        },
+        scanline: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(1000%)' },
+        }
+      }
     },
   },
   plugins: [],
