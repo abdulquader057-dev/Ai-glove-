@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import Image from 'next/image';
 import { useHardwareStore } from '@/store/hardwareStore';
 import { useGestureStore } from '@/store/gestureStore';
 import { bleService } from '@/services/bleService';
@@ -16,10 +17,15 @@ import {
   AlertTriangle,
   Cpu,
   Layers,
-  Radio
+  Radio,
+  Eye
 } from 'lucide-react';
 
-export const HardwareDashboard: React.FC = () => {
+interface HardwareDashboardProps {
+  onNavigateTo3D?: () => void;
+}
+
+export const HardwareDashboard: React.FC<HardwareDashboardProps> = ({ onNavigateTo3D }) => {
   const { 
     connectionState, 
     deviceName, 
@@ -113,7 +119,7 @@ export const HardwareDashboard: React.FC = () => {
       {/* Main Split Panel Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* LEFT PANEL: CONNECTION CONTROL (4 cols) */}
+        {/* LEFT PANEL: CONNECTION CONTROL & 3D HAND PREVIEW (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="glass-card p-6 relative overflow-hidden space-y-6">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -196,6 +202,34 @@ export const HardwareDashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* 3D PHOTOREALISTIC HUMAN HAND CALLOUT CARD */}
+            <div 
+              onClick={onNavigateTo3D}
+              className="p-4 rounded-2xl bg-gradient-to-br from-[#00f0ff]/15 via-[#0a0f1e] to-[#8b5cf6]/20 border border-[#00f0ff]/40 shadow-[0_0_20px_rgba(0,240,255,0.2)] cursor-pointer group hover:border-[#00f0ff] transition-all space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-orbitron text-[#00f0ff] uppercase tracking-wider flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 animate-pulse" /> 3D HOLOGRAPHIC VIEW
+                </span>
+                <span className="text-[10px] font-rajdhani text-white font-bold bg-[#00f0ff]/20 px-2 py-0.5 rounded uppercase">
+                  OPEN LAB →
+                </span>
+              </div>
+
+              <div className="relative w-full h-32 rounded-xl overflow-hidden border border-white/10 bg-[#030712] flex items-center justify-center">
+                <Image
+                  src="/photorealistic-3d-hand.jpg"
+                  alt="3D Holographic Hand Preview"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+
+              <p className="text-[11px] text-[#94a3b8] font-inter">
+                Interactive 3D real human hand telemetry model with rotation controls &amp; exploded layers.
+              </p>
+            </div>
+
             {/* Architecture Badge */}
             <div className="p-3 rounded-xl bg-[#0066ff]/10 border border-[#0066ff]/30 text-xs space-y-1">
               <div className="flex items-center justify-between text-[#00f0ff] font-orbitron text-[11px]">
@@ -203,7 +237,7 @@ export const HardwareDashboard: React.FC = () => {
                 <span>BLE 5.0</span>
               </div>
               <p className="text-[10px] text-[#94a3b8]">
-                Quantized TFLite edge model streaming flex & 6-axis IMU quaternions.
+                Quantized TFLite edge model streaming flex &amp; 6-axis IMU quaternions.
               </p>
             </div>
           </div>

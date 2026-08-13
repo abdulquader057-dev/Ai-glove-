@@ -30,7 +30,9 @@ export default function Home() {
 
       {/* 4. MAIN CONTENT AREA */}
       <main id="main-content" className="relative z-10 pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex-1 w-full">
-        {activeTab === 'hardware' && <HardwareDashboard />}
+        {activeTab === 'hardware' && (
+          <HardwareDashboard onNavigateTo3D={() => setActiveTab('3d-view')} />
+        )}
         {activeTab === 'how-it-works' && <HowItWorksTimeline />}
         {activeTab === 'saved-gestures' && <SavedGesturesManager />}
         {activeTab === 'features' && <FeatureGrid />}
