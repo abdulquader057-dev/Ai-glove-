@@ -9,8 +9,7 @@ import {
   Sparkles,
   Maximize2,
   Minimize2,
-  Sliders,
-  Cpu
+  Sliders
 } from 'lucide-react';
 
 export const HolographicGloveView: React.FC = () => {
