@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 
 export const HolographicGloveView: React.FC = () => {
-  const [rotationY, setRotationY] = useState(10);
-  const [rotationX, setRotationX] = useState(5);
+  const [rotationY, setRotationY] = useState(8);
+  const [rotationX, setRotationX] = useState(4);
   const [theme, setTheme] = useState<'cyan' | 'purple' | 'pink'>('cyan');
   const [showSensors, setShowSensors] = useState(true);
   const [showNeuralMesh, setShowNeuralMesh] = useState(true);
@@ -23,19 +23,19 @@ export const HolographicGloveView: React.FC = () => {
   const [isExploded, setIsExploded] = useState(false);
 
   const themeFilters = {
-    cyan: 'hue-rotate(0deg) brightness(1.1)',
-    purple: 'hue-rotate(60deg) brightness(1.15)',
-    pink: 'hue-rotate(120deg) brightness(1.2)',
+    cyan: 'hue-rotate(0deg) brightness(1.15)',
+    purple: 'hue-rotate(60deg) brightness(1.2)',
+    pink: 'hue-rotate(120deg) brightness(1.25)',
   };
 
-  // Anatomical leader badges linked to real human hand coordinates
+  // Anatomical leader badges linked to dorsal x-ray human hand coordinates
   const badges = [
-    { id: 'flex', label: 'CYAN FLEX SENSORS', x: 8, y: 15, targetX: '42%', targetY: '25%' },
-    { id: 'voice', label: 'VOICE TTS ENGINE', x: 70, y: 12, targetX: '55%', targetY: '18%' },
-    { id: 'ai', label: 'EDGE AI MODEL', x: 5, y: 46, targetX: '36%', targetY: '50%' },
-    { id: 'imu', label: '6-AXIS IMU GESTURE', x: 74, y: 48, targetX: '68%', targetY: '54%' },
-    { id: 'chip', label: 'XIAO nRF52840 MCU', x: 8, y: 78, targetX: '50%', targetY: '75%' },
-    { id: 'ble', label: 'BLE 5.0 TELEMETRY', x: 72, y: 80, targetX: '62%', targetY: '82%' },
+    { id: 'flex', label: 'CYAN FLEX SENSORS', x: 8, y: 14, targetX: '45%', targetY: '25%' },
+    { id: 'voice', label: 'SYNTHETIC VOICE TTS', x: 72, y: 12, targetX: '58%', targetY: '18%' },
+    { id: 'ai', label: 'EDGE ML QUANTIZED MODEL', x: 5, y: 46, targetX: '38%', targetY: '52%' },
+    { id: 'imu', label: '6-AXIS IMU (G-FORCE/ROT)', x: 74, y: 48, targetX: '65%', targetY: '54%' },
+    { id: 'chip', label: 'XIAO nRF52840 MCU', x: 8, y: 78, targetX: '50%', targetY: '76%' },
+    { id: 'ble', label: 'BLE 5.0 NORDIC UART', x: 72, y: 80, targetX: '62%', targetY: '82%' },
   ];
 
   return (
@@ -45,7 +45,7 @@ export const HolographicGloveView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#00f0ff]/20 pb-5">
         <div>
           <span className="px-2.5 py-0.5 rounded bg-[#00f0ff]/20 text-[#00f0ff] font-orbitron text-[10px] tracking-widest uppercase">
-            PHOTOREALISTIC 3D HUMAN HAND MATRIX
+            ANATOMICAL DORSAL X-RAY MATRIX
           </span>
           <h1 className="font-orbitron font-extrabold text-2xl sm:text-3xl text-gradient-cyan mt-1">
             HOLOGRAPHIC GLOVE VIEWER
@@ -66,17 +66,17 @@ export const HolographicGloveView: React.FC = () => {
       {/* Main 3D Display & Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* CENTER DISPLAY: PHOTOREALISTIC 3D HUMAN HAND (8 cols) */}
+        {/* CENTER DISPLAY: EXACT 3D HOLOGRAPHIC X-RAY HUMAN HAND (8 cols) */}
         <div className="lg:col-span-8 glass-card p-6 min-h-[580px] flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#0a0f1e] via-[#030712] to-[#0a0f1e]">
           
           {/* Top Status */}
           <div className="flex items-center justify-between text-xs font-orbitron z-10">
             <span className="text-[#00f0ff] flex items-center gap-2">
               <Eye className="w-4 h-4 animate-pulse" />
-              HYPER-REALISTIC HUMAN HAND MODEL
+              TRANSLUCENT BLUE X-RAY HAND HOLOGRAM
             </span>
             <span className="text-[#94a3b8]">
-              3D PERSPECTIVE: {rotationY}° Y / {rotationX}° X
+              PERSPECTIVE: {rotationY}° Y / {rotationX}° X
             </span>
           </div>
 
@@ -97,26 +97,26 @@ export const HolographicGloveView: React.FC = () => {
               }}
             >
               
-              {/* Photorealistic 3D Human Hand Render */}
+              {/* Exact 3D Holographic X-Ray Human Hand Render */}
               <div className={`relative w-full h-full flex items-center justify-center transition-all duration-700 ${
                 isExploded ? 'scale-105 translate-y-[-20px]' : ''
               }`}>
                 <Image
-                  src="/photorealistic-3d-hand.jpg"
-                  alt="Photorealistic 3D Human Hand Holographic Render"
+                  src="/holographic-xray-hand.jpg"
+                  alt="3D Holographic X-Ray Human Hand Render"
                   fill
                   priority
-                  className="object-contain drop-shadow-[0_0_35px_rgba(0,240,255,0.6)]"
+                  className="object-contain drop-shadow-[0_0_35px_rgba(0,240,255,0.7)]"
                 />
 
                 {/* Interactive Exploded Micro-Chip Overlay */}
                 {showChip && (
-                  <div className={`absolute bottom-[20%] left-[46%] -translate-x-1/2 transition-all duration-500 ${
+                  <div className={`absolute bottom-[18%] left-[48%] -translate-x-1/2 transition-all duration-500 ${
                     isExploded ? 'translate-y-[45px] scale-110' : ''
                   }`}>
                     <div className="px-3 py-1.5 rounded-lg bg-[#0a0f1e]/90 border-2 border-[#00f0ff] shadow-[0_0_20px_rgba(0,240,255,0.8)] text-[#00f0ff] font-orbitron font-bold text-xs tracking-wider flex items-center gap-1.5 animate-pulse">
                       <span className="w-2 h-2 rounded-full bg-[#00f0ff]" />
-                      XIAO nRF52840
+                      XIAO nRF52840 MCU
                     </div>
                   </div>
                 )}
