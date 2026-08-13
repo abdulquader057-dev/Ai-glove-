@@ -20,20 +20,21 @@ export const HolographicGloveView: React.FC = () => {
   const [isExploded, setIsExploded] = useState(false);
 
   const themeColors = {
-    cyan: { primary: '#00f0ff', secondary: '#0066ff', glow: 'rgba(0, 240, 255, 0.4)' },
-    purple: { primary: '#8b5cf6', secondary: '#c084fc', glow: 'rgba(139, 92, 246, 0.4)' },
-    pink: { primary: '#ec4899', secondary: '#f472b6', glow: 'rgba(236, 72, 153, 0.4)' },
+    cyan: { primary: '#00f0ff', secondary: '#0066ff', accent: '#ec4899', glow: 'rgba(0, 240, 255, 0.5)' },
+    purple: { primary: '#8b5cf6', secondary: '#c084fc', accent: '#00f0ff', glow: 'rgba(139, 92, 246, 0.5)' },
+    pink: { primary: '#ec4899', secondary: '#f472b6', accent: '#00f0ff', glow: 'rgba(236, 72, 153, 0.5)' },
   };
 
   const currentTheme = themeColors[theme];
 
+  // Leader Badges positioned around the hand with target line coordinates
   const badges = [
-    { label: 'FLEX SENSORS', x: 22, y: 18 },
-    { label: '6-AXIS IMU', x: 78, y: 35 },
-    { label: 'XIAO nRF52840', x: 20, y: 70 },
-    { label: 'BLE 5.0 ANTENNA', x: 80, y: 75 },
-    { label: 'EDGE AI MODEL', x: 18, y: 45 },
-    { label: 'VOICE OUTPUT', x: 82, y: 20 },
+    { id: 'flex', label: 'FLEX SENSORS', x: 12, y: 15, targetX: 185, targetY: 130 },
+    { id: 'voice', label: 'VOICE OUTPUT', x: 74, y: 12, targetX: 300, targetY: 140 },
+    { id: 'ai', label: 'EDGE AI MODEL', x: 8, y: 45, targetX: 235, targetY: 340 },
+    { id: 'imu', label: '6-AXIS IMU', x: 76, y: 48, targetX: 310, targetY: 360 },
+    { id: 'chip', label: 'XIAO nRF52840', x: 10, y: 76, targetX: 235, targetY: 480 },
+    { id: 'ble', label: 'BLE 5.0 ANTENNA', x: 74, y: 78, targetX: 290, targetY: 510 },
   ];
 
   return (
@@ -65,123 +66,183 @@ export const HolographicGloveView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* CENTER: 3D HOLOGRAPHIC SVG HAND DISPLAY (8 cols) */}
-        <div className="lg:col-span-8 glass-card p-6 min-h-[480px] flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-8 glass-card p-6 min-h-[520px] flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#0a0f1e] via-[#030712] to-[#0a0f1e]">
           
           {/* Top Status Indicators */}
           <div className="flex items-center justify-between text-xs font-orbitron z-10">
             <span className="text-[#00f0ff] flex items-center gap-2">
               <Eye className="w-4 h-4 animate-pulse" />
-              HOLOGRAPHIC MATRIX ACTIVE
+              HOLOGRAPHIC NEURAL MESH ACTIVE
             </span>
             <span className="text-[#94a3b8]">
               PERSPECTIVE: {rotation}° Y-AXIS
             </span>
           </div>
 
-          {/* Holographic Wireframe View Container with 3D Perspective */}
+          {/* Holographic Container with 3D Perspective */}
           <div 
-            className="relative w-full h-[400px] flex items-center justify-center my-4 transition-transform duration-500 ease-out"
+            className="relative w-full h-[450px] flex items-center justify-center my-2"
             style={{
               perspective: '1000px',
               transformStyle: 'preserve-3d',
             }}
           >
             <div 
-              className="relative w-full h-full max-w-[500px] flex items-center justify-center transition-transform duration-300"
+              className="relative w-full h-full max-w-[550px] flex items-center justify-center transition-transform duration-300"
               style={{
                 transform: `rotateY(${rotation}deg) rotateX(10deg)`,
                 transformStyle: 'preserve-3d',
               }}
             >
               
-              {/* Layer 1: Holographic Background Grid Disk */}
-              <div 
-                className="absolute inset-x-8 bottom-4 h-32 rounded-full border border-[#00f0ff]/30 bg-[#00f0ff]/5 animate-pulse blur-[1px]"
-                style={{ transform: 'rotateX(80deg) translateZ(-60px)' }}
-              />
-
-              {/* Layer 2: Main SVG Hand Wireframe */}
+              {/* SVG Hologram */}
               <svg 
                 viewBox="0 0 500 600" 
-                className={`w-full h-full max-h-[380px] transition-all duration-700 ${
-                  isExploded ? 'translate-y-[-20px] scale-105' : ''
+                className={`w-full h-full max-h-[440px] transition-all duration-700 ${
+                  isExploded ? 'translate-y-[-25px] scale-105' : ''
                 }`}
-                style={{ filter: `drop-shadow(0 0 15px ${currentTheme.glow})` }}
+                style={{ filter: `drop-shadow(0 0 25px ${currentTheme.glow})` }}
               >
                 <defs>
-                  <linearGradient id="gloveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={currentTheme.primary} stopOpacity="0.8" />
-                    <stop offset="100%" stopColor={currentTheme.secondary} stopOpacity="0.4" />
+                  {/* Palm Gradient - Pink/Purple left, Cyan right */}
+                  <linearGradient id="palmPinkCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ec4899" stopOpacity="0.45" />
+                    <stop offset="40%" stopColor="#8b5cf6" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#00f0ff" stopOpacity="0.2" />
+                  </linearGradient>
+
+                  {/* Cyan Sensor Glow */}
+                  <filter id="cyanGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+
+                  {/* Sensor Gradient */}
+                  <linearGradient id="sensorGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#0066ff" />
+                    <stop offset="50%" stopColor="#00f0ff" />
+                    <stop offset="100%" stopColor="#ffffff" />
                   </linearGradient>
                 </defs>
 
-                {/* Hand Palm Outline */}
-                <path
-                  d="M170,480 L140,360 L120,270 L100,190 C100,160 120,160 125,190 L150,290 L160,140 C160,110 180,110 185,140 L205,280 L220,110 C220,80 240,80 245,110 L260,285 L275,150 C275,120 295,120 298,150 L310,310 L330,220 C330,190 350,190 350,220 L330,360 L310,480 Z"
-                  fill="url(#gloveGrad)"
-                  stroke={currentTheme.primary}
-                  strokeWidth="2"
-                  strokeDasharray="6 3"
-                  className="transition-all duration-500"
-                />
+                {/* 1. Concentric Radial Target Rings (Background Grid) */}
+                <g opacity="0.25">
+                  <circle cx="250" cy="300" r="230" stroke="#00f0ff" strokeWidth="1" fill="none" strokeDasharray="6 6" />
+                  <circle cx="250" cy="300" r="170" stroke="#00f0ff" strokeWidth="1" fill="none" />
+                  <circle cx="250" cy="300" r="110" stroke="#8b5cf6" strokeWidth="1" fill="none" strokeDasharray="4 4" />
+                  <line x1="20" y1="300" x2="480" y2="300" stroke="#00f0ff" strokeWidth="0.5" strokeDasharray="2 4" />
+                  <line x1="250" y1="50" x2="250" y2="550" stroke="#00f0ff" strokeWidth="0.5" strokeDasharray="2 4" />
+                </g>
 
-                {/* Sensors Overlay Layer */}
-                {showSensors && (
-                  <g className="transition-opacity duration-300">
-                    {/* 5 Flex Sensors Strips */}
-                    <path d="M125,190 L150,290 L160,400" stroke="#00f0ff" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M185,140 L205,280 L210,410" stroke="#00f0ff" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M245,110 L260,285 L260,415" stroke="#00f0ff" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M298,150 L310,310 L295,420" stroke="#00f0ff" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M350,220 L330,360 L315,440" stroke="#00f0ff" strokeWidth="4" strokeLinecap="round" />
-                  </g>
-                )}
-
-                {/* Circuit Traces Layer */}
-                {showCircuits && (
-                  <g className="transition-opacity duration-300">
-                    <path d="M160,400 Q210,430 260,415" stroke="#8b5cf6" strokeWidth="2" strokeDasharray="4 2" />
-                    <path d="M210,410 Q240,460 250,500" stroke="#ec4899" strokeWidth="2" strokeDasharray="3 3" />
-                    <circle cx="210" cy="410" r="4" fill="#00f0ff" className="animate-pulse" />
-                    <circle cx="260" cy="415" r="4" fill="#ec4899" className="animate-pulse" />
-                  </g>
-                )}
-
-                {/* Microcontroller Chip Layer */}
-                {showChip && (
-                  <g className={`transition-all duration-500 ${isExploded ? 'translate-y-[40px]' : ''}`}>
-                    <rect x="200" y="460" width="70" height="50" rx="8" fill="#0a0f1e" stroke="#00f0ff" strokeWidth="2" />
-                    <text x="235" y="490" textAnchor="middle" fill="#00f0ff" fontSize="10" fontFamily="var(--font-orbitron)">XIAO</text>
-                  </g>
-                )}
-
-                {/* Fingertip Glowing Nodes */}
-                {[
-                  { cx: 125, cy: 190 },
-                  { cx: 185, cy: 140 },
-                  { cx: 245, cy: 110 },
-                  { cx: 298, cy: 150 },
-                  { cx: 350, cy: 220 },
-                ].map((node, i) => (
-                  <circle
-                    key={i}
-                    cx={node.cx}
-                    cy={node.cy}
-                    r="7"
-                    fill={currentTheme.primary}
-                    className="animate-node-pulse"
+                {/* 2. Main Hand Holographic Contour */}
+                <g>
+                  {/* Palm & Wrist Contour Fill */}
+                  <path
+                    d="M170,520 C140,510 130,470 120,400 C110,340 90,260 85,210 C80,175 105,160 115,190 C125,220 145,300 155,340 C155,300 155,180 155,120 C155,85 180,85 185,120 C190,160 195,290 198,340 C200,290 215,130 225,90 C230,65 255,65 258,95 C262,140 265,290 265,340 C270,290 285,150 295,115 C300,90 325,90 325,120 C325,165 320,300 315,350 C325,310 350,220 365,190 C375,170 395,185 385,215 C370,260 345,350 340,410 C335,460 315,520 270,530 Z"
+                    fill="url(#palmPinkCyan)"
+                    stroke={currentTheme.primary}
+                    strokeWidth="2"
+                    strokeDasharray="4 2"
                   />
+
+                  {/* Wireframe Grid Texture Pattern Overlay */}
+                  <path
+                    d="M130,450 Q230,480 330,440 M140,380 Q230,400 335,370 M150,320 Q230,340 330,310 M160,260 Q230,280 310,250"
+                    stroke="#ec4899"
+                    strokeWidth="0.75"
+                    strokeDasharray="2 4"
+                    opacity="0.6"
+                  />
+                </g>
+
+                {/* 3. Glowing Cyan Flex Sensors Channels (Running up 5 fingers) */}
+                {showSensors && (
+                  <g filter="url(#cyanGlowFilter)">
+                    {/* Thumb Sensor Capsule */}
+                    <path d="M120,400 L100,280 L92,205" stroke="url(#sensorGrad)" strokeWidth="7" strokeLinecap="round" />
+                    {/* Index Sensor Capsule */}
+                    <path d="M165,370 L170,240 L172,125" stroke="url(#sensorGrad)" strokeWidth="8" strokeLinecap="round" />
+                    {/* Middle Sensor Capsule */}
+                    <path d="M225,370 L235,220 L242,95" stroke="url(#sensorGrad)" strokeWidth="8" strokeLinecap="round" />
+                    {/* Ring Sensor Capsule */}
+                    <path d="M285,370 L292,240 L308,120" stroke="url(#sensorGrad)" strokeWidth="8" strokeLinecap="round" />
+                    {/* Pinky Sensor Capsule */}
+                    <path d="M330,390 L350,280 L372,200" stroke="url(#sensorGrad)" strokeWidth="7" strokeLinecap="round" />
+
+                    {/* Inner Sensor Highlights */}
+                    <path d="M120,400 L100,280 L92,205" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M165,370 L170,240 L172,125" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M225,370 L235,220 L242,95" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M285,370 L292,240 L308,120" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M330,390 L350,280 L372,200" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+                  </g>
+                )}
+
+                {/* 4. Circuit Traces & Joint Interconnects */}
+                {showCircuits && (
+                  <g>
+                    <path d="M120,400 Q180,420 235,410 Q290,420 330,390" stroke="#00f0ff" strokeWidth="1.5" strokeDasharray="4 2" />
+                    <path d="M235,410 L235,480" stroke="#ec4899" strokeWidth="2" strokeDasharray="3 3" />
+                    <path d="M170,240 Q235,250 292,240" stroke="#8b5cf6" strokeWidth="1.5" strokeDasharray="3 3" />
+                  </g>
+                )}
+
+                {/* 5. Microcontroller Chip Layer */}
+                {showChip && (
+                  <g className={`transition-all duration-500 ${isExploded ? 'translate-y-[45px]' : ''}`}>
+                    <rect x="200" y="455" width="70" height="50" rx="10" fill="#0a0f1e" stroke="#00f0ff" strokeWidth="2.5" />
+                    <rect x="205" y="460" width="60" height="40" rx="6" fill="#00f0ff" fillOpacity="0.1" />
+                    <text x="235" y="485" textAnchor="middle" fill="#00f0ff" fontSize="11" fontFamily="var(--font-orbitron)" fontWeight="bold">
+                      XIAO
+                    </text>
+                  </g>
+                )}
+
+                {/* 6. Glowing Joint Nodes (Knuckles, Phalanges, Fingertips) */}
+                {[
+                  // Fingertips
+                  { cx: 92, cy: 205 },
+                  { cx: 172, cy: 125 },
+                  { cx: 242, cy: 95 },
+                  { cx: 308, cy: 120 },
+                  { cx: 372, cy: 200 },
+                  // Joints PIP
+                  { cx: 100, cy: 280 },
+                  { cx: 170, cy: 240 },
+                  { cx: 235, cy: 220 },
+                  { cx: 292, cy: 240 },
+                  { cx: 350, cy: 280 },
+                  // Knuckles MCP
+                  { cx: 120, cy: 400 },
+                  { cx: 165, cy: 370 },
+                  { cx: 225, cy: 370 },
+                  { cx: 285, cy: 370 },
+                  { cx: 330, cy: 390 },
+                ].map((node, i) => (
+                  <g key={i}>
+                    <circle cx={node.cx} cy={node.cy} r="8" fill="#00f0ff" fillOpacity="0.3" className="animate-ping" />
+                    <circle cx={node.cx} cy={node.cy} r="6" fill="#00f0ff" stroke="#ffffff" strokeWidth="1.5" className="animate-node-pulse" />
+                  </g>
                 ))}
+
+                {/* 7. Connecting Leader Lines for Badges */}
+                {badges.map((b) => (
+                  <g key={b.id}>
+                    <circle cx={b.targetX} cy={b.targetY} r="4" fill="#00f0ff" />
+                  </g>
+                ))}
+
               </svg>
 
-              {/* Holographic Cyan Leader Badges */}
+              {/* Cyan Leader Badges Positioned Around Hand */}
               {badges.map((b) => (
                 <div
-                  key={b.label}
-                  className="absolute px-2.5 py-1 rounded-full bg-[#0a0f1e]/90 border border-[#00f0ff]/40 text-[#00f0ff] font-orbitron text-[9px] tracking-wider shadow-[0_0_12px_rgba(0,240,255,0.3)] hidden sm:block pointer-events-none"
+                  key={b.id}
+                  className="absolute px-3 py-1.5 rounded-full bg-[#0a0f1e]/90 border border-[#00f0ff]/50 text-[#00f0ff] font-orbitron text-[10px] tracking-wider shadow-[0_0_15px_rgba(0,240,255,0.4)] hidden sm:flex items-center gap-1.5 transition-all hover:scale-105"
                   style={{ top: `${b.y}%`, left: `${b.x}%` }}
                 >
-                  {b.label}
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
+                  <span>{b.label}</span>
                 </div>
               ))}
 
