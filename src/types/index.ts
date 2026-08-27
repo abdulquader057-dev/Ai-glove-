@@ -1,3 +1,5 @@
+export type ConnectionState = 'disconnected' | 'scanning' | 'pairing' | 'connected' | 'error';
+
 export interface FlexSensors {
   thumb: number;
   index: number;
@@ -6,15 +8,9 @@ export interface FlexSensors {
   pinky: number;
 }
 
-export interface Vector3D {
-  x: number;
-  y: number;
-  z: number;
-}
-
 export interface IMUData {
-  accel: Vector3D;
-  gyro: Vector3D;
+  accel: { x: number; y: number; z: number };
+  gyro: { x: number; y: number; z: number };
 }
 
 export interface GestureItem {
@@ -22,30 +18,38 @@ export interface GestureItem {
   name: string;
   emoji: string;
   mappedPhrase: string;
-  flexThresholds: {
-    min: [number, number, number, number, number];
-    max: [number, number, number, number, number];
-  };
-  lastUsed?: string;
-  confidence?: number;
-  isCustom?: boolean;
+  fingerFlex: FlexSensors; // 0-100% flexion for each finger
+  description?: string;
+  category?: 'essential' | 'emergency' | 'social' | 'custom';
 }
 
 export interface GloveProfile {
-  gloveSerial: string;
-  isFirstLogin: boolean;
-  createdAt: string;
-  lastLogin: string;
-  voiceSpeed: number;
-  voicePitch: number;
-  selectedVoiceURI?: string;
+  serialId: string; // e.g. SSG-2050-X99
+  ownerName: string;
+  gloveModel: string;
+  calibrationDate: string;
+  savedGesturesCount: number;
 }
 
-export interface BLELogPacket {
+export interface BleLogEntry {
   id: string;
   timestamp: string;
   hex: string;
-  type: 'data' | 'info' | 'warn' | 'error';
+  type: 'info' | 'warn' | 'error' | 'data';
 }
 
-export type ConnectionState = 'disconnected' | 'scanning' | 'pairing' | 'connected';
+export interface PhraseToken {
+  id: string;
+  word: string;
+  timestamp: string;
+  confidence: number;
+}
+
+export type DockToolType = 'library' | 'history' | 'graph' | 'calibration' | null;
+
+export interface CalibrationStep {
+  step: number;
+  title: string;
+  instruction: string;
+  targetPose: 'open' | 'fist' | 'neutral';
+}
