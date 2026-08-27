@@ -2,14 +2,9 @@
 
 import React, { useState } from 'react';
 import { 
-  Sparkles, 
-  Cpu, 
-  Activity, 
   Layers, 
-  ShieldCheck, 
+  CheckCircle2, 
   Zap, 
-  Sliders,
-  CheckCircle2,
   AlertCircle
 } from 'lucide-react';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, ArrowRight, RotateCw, Sparkles } from 'lucide-react';
+import { CheckCircle2, RotateCw, Sparkles } from 'lucide-react';
 
 export const CalibrationWizard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);

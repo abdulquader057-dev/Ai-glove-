@@ -12,8 +12,7 @@ import {
   X, 
   Check, 
   Search,
-  Radio,
-  Sliders
+  Radio
 } from 'lucide-react';
 
 export const SavedGesturesManager: React.FC = () => {

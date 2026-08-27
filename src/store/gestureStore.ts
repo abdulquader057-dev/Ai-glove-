@@ -158,7 +158,7 @@ interface GestureStore {
   loadSavedGesturesForGlove: (gloveSerial: string) => void;
 }
 
-export const useGestureStore = create<GestureStore>((set, get) => ({
+export const useGestureStore = create<GestureStore>((set) => ({
   gestures: DEFAULT_GESTURES,
   activeGesture: DEFAULT_GESTURES[4], // default POINT UP ("Help")
   confidence: 94.6,

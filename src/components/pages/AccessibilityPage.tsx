@@ -4,11 +4,8 @@ import React, { useState } from 'react';
 import { 
   Volume2, 
   VolumeX, 
-  Sparkles, 
   Mic, 
   Sliders, 
-  Check, 
-  Radio,
   HeartHandshake
 } from 'lucide-react';
 import { useGestureStore } from '@/store/gestureStore';

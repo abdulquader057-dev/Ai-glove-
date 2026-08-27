@@ -8,11 +8,7 @@ import {
   Cpu, 
   Wifi, 
   Sliders, 
-  Maximize2,
-  Sparkles,
-  Info,
-  CheckCircle2,
-  ChevronRight
+  Sparkles
 } from 'lucide-react';
 import { FlexSensors } from '@/types';
 

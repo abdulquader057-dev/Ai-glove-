@@ -21,7 +21,7 @@ class ClassifierService {
       Math.round((flex.pinky / 1023) * 100),
     ];
 
-    // Factor IMU orientation magnitude into spatial posture check
+    // Factor IMU orientation vector into spatial posture check
     const imuMagnitude = Math.sqrt(imu.accel.x ** 2 + imu.accel.y ** 2 + imu.accel.z ** 2);
 
     const { gestures, setActiveGesture, addTokenToPhrase, autoSpeak } = useGestureStore.getState();
@@ -42,8 +42,11 @@ class ClassifierService {
         distanceSum += Math.abs(currentPercentages[i] - target[i]);
       }
 
-      if (distanceSum < lowestDistance) {
-        lowestDistance = distanceSum;
+      // Penalty reduction for stable IMU motion
+      const adjustedDistance = distanceSum - (imuMagnitude > 0.5 ? 2 : 0);
+
+      if (adjustedDistance < lowestDistance) {
+        lowestDistance = adjustedDistance;
         bestMatch = gesture;
       }
     }

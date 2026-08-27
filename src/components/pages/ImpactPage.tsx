@@ -5,7 +5,6 @@ import {
   Sparkles, 
   CheckCircle2, 
   Clock, 
-  ArrowRight, 
   Radio, 
   Cpu, 
   Smartphone, 

@@ -3,7 +3,6 @@
 import React from 'react';
 import { useGestureStore } from '@/store/gestureStore';
 import { GestureItem } from '@/types';
-import { Plus } from 'lucide-react';
 
 export const GestureLibraryGrid: React.FC = () => {
   const { gestures, activeGesture, setActiveGesture, addTokenToPhrase } = useGestureStore();

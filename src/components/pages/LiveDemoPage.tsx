@@ -13,30 +13,20 @@ import {
   Wifi, 
   WifiOff, 
   Volume2, 
-  Activity, 
-  Terminal, 
   Cpu, 
-  Layers, 
-  Sparkles, 
-  Eye,
-  Sliders,
-  RotateCw,
-  Radio
+  RotateCw
 } from 'lucide-react';
 
 export const LiveDemoPage: React.FC = () => {
   const [initializing, setInitializing] = useState(true);
   const [rotationY, setRotationY] = useState(10);
-  const [rotationX, setRotationX] = useState(5);
 
   const { 
     connectionState, 
-    deviceName, 
     flexSensors, 
     imu, 
     isSimulation, 
-    toggleSimulation,
-    isBleSupported
+    toggleSimulation
   } = useHardwareStore();
 
   const { 
@@ -44,12 +34,10 @@ export const LiveDemoPage: React.FC = () => {
     confidence, 
     inferenceTimeMs, 
     isSpeaking, 
-    setSpeaking,
-    addTokenToPhrase,
-    autoSpeak
+    setSpeaking
   } = useGestureStore();
 
-  // Fast scanning entry sequence (1.5 seconds)
+  // Fast scanning entry sequence (1.2 seconds)
   useEffect(() => {
     const timer = setTimeout(() => {
       setInitializing(false);
@@ -182,7 +170,7 @@ export const LiveDemoPage: React.FC = () => {
 
             {/* 5 FLEX SENSOR BARS */}
             <div className="space-y-3">
-              {flexSensorsList.map((s, idx) => {
+              {flexSensorsList.map((s) => {
                 const pct = Math.min(100, Math.round((s.val / 1023) * 100));
                 return (
                   <div key={s.label} className="space-y-1">
@@ -252,7 +240,7 @@ export const LiveDemoPage: React.FC = () => {
           >
             <div 
               className="relative w-full h-full max-w-[460px] flex items-center justify-center transition-transform duration-300 ease-out"
-              style={{ transform: `rotateY(${rotationY}deg) rotateX(${rotationX}deg)` }}
+              style={{ transform: `rotateY(${rotationY}deg)` }}
             >
               <Image
                 src="/holographic-xray-hand.jpg"
