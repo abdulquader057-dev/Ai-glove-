@@ -14,7 +14,6 @@ interface AuthStore {
   openAuthModal: () => void;
   closeAuthModal: () => void;
   clearError: () => void;
-  updateProfileSettings: (speed: number, pitch: number, voiceURI?: string) => void;
 }
 
 const DEFAULT_ACCOUNTS: Record<string, string> = {
@@ -24,41 +23,32 @@ const DEFAULT_ACCOUNTS: Record<string, string> = {
 };
 
 export const useAuthStore = create<AuthStore>((set, get) => {
-  // Check client storage initial state safely
   const initialSerial = typeof window !== 'undefined' ? localStorage.getItem('sensasign_glove_serial') : null;
   const isAuth = !!initialSerial;
+
+  const createProfileObj = (serial: string): GloveProfile => ({
+    serialId: serial,
+    ownerName: 'Primary Operator',
+    gloveModel: 'AI GLOVE v2.4 (XIAO nRF52840)',
+    calibrationDate: '2026-08-15',
+    savedGesturesCount: 12,
+  });
 
   return {
     isAuthenticated: isAuth,
     activeGloveSerial: initialSerial || 'SSG-2050-X99',
-    profile: initialSerial ? {
-      gloveSerial: initialSerial,
-      isFirstLogin: false,
-      createdAt: '2026-01-15',
-      lastLogin: new Date().toISOString().split('T')[0],
-      voiceSpeed: 1.0,
-      voicePitch: 1.0,
-    } : {
-      gloveSerial: 'SSG-2050-X99',
-      isFirstLogin: false,
-      createdAt: '2026-01-15',
-      lastLogin: new Date().toISOString().split('T')[0],
-      voiceSpeed: 1.0,
-      voicePitch: 1.0,
-    },
+    profile: createProfileObj(initialSerial || 'SSG-2050-X99'),
     isAuthModalOpen: false,
     error: null,
 
     login: (gloveSerial, password) => {
       const cleanSerial = gloveSerial.trim().toUpperCase();
       
-      // Basic validation for glove serial format (SSG-XXXX-XXXX)
       if (!cleanSerial.startsWith('SSG-')) {
         set({ error: 'Invalid Glove Serial ID format. Must start with SSG- (e.g. SSG-2050-X99)' });
         return false;
       }
 
-      // Check stored custom accounts or default
       const customAccountsJson = typeof window !== 'undefined' ? localStorage.getItem('sensasign_accounts') : null;
       const customAccounts = customAccountsJson ? JSON.parse(customAccountsJson) : {};
       const allAccounts = { ...DEFAULT_ACCOUNTS, ...customAccounts };
@@ -68,7 +58,6 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         return false;
       }
 
-      // If new glove ID, auto register with provided password
       if (!allAccounts[cleanSerial]) {
         allAccounts[cleanSerial] = password;
         if (typeof window !== 'undefined') {
@@ -83,14 +72,7 @@ export const useAuthStore = create<AuthStore>((set, get) => {
       set({
         isAuthenticated: true,
         activeGloveSerial: cleanSerial,
-        profile: {
-          gloveSerial: cleanSerial,
-          isFirstLogin: false,
-          createdAt: new Date().toISOString().split('T')[0],
-          lastLogin: new Date().toISOString().split('T')[0],
-          voiceSpeed: 1.0,
-          voicePitch: 1.0,
-        },
+        profile: createProfileObj(cleanSerial),
         isAuthModalOpen: false,
         error: null,
       });
@@ -117,16 +99,5 @@ export const useAuthStore = create<AuthStore>((set, get) => {
     openAuthModal: () => set({ isAuthModalOpen: true }),
     closeAuthModal: () => set({ isAuthModalOpen: false }),
     clearError: () => set({ error: null }),
-
-    updateProfileSettings: (voiceSpeed, voicePitch, selectedVoiceURI) => {
-      set((state) => ({
-        profile: state.profile ? {
-          ...state.profile,
-          voiceSpeed,
-          voicePitch,
-          selectedVoiceURI,
-        } : null,
-      }));
-    },
   };
 });

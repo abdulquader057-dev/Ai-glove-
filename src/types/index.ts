@@ -18,13 +18,13 @@ export interface GestureItem {
   name: string;
   emoji: string;
   mappedPhrase: string;
-  fingerFlex: FlexSensors; // 0-100% flexion for each finger
+  fingerFlex: FlexSensors;
   description?: string;
   category?: 'essential' | 'emergency' | 'social' | 'custom';
 }
 
 export interface GloveProfile {
-  serialId: string; // e.g. SSG-2050-X99
+  serialId: string;
   ownerName: string;
   gloveModel: string;
   calibrationDate: string;
@@ -37,6 +37,8 @@ export interface BleLogEntry {
   hex: string;
   type: 'info' | 'warn' | 'error' | 'data';
 }
+
+export type BLELogPacket = BleLogEntry;
 
 export interface PhraseToken {
   id: string;
