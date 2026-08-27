@@ -62,16 +62,19 @@ export const SavedGesturesManager: React.FC = () => {
     e.preventDefault();
     if (!name || !mappedPhrase || !capturedFlex) return;
 
-    // Build min and max thresholds around captured values (+- 120 range)
-    const min = capturedFlex.map((val) => Math.max(0, val - 120)) as [number, number, number, number, number];
-    const max = capturedFlex.map((val) => Math.min(1023, val + 120)) as [number, number, number, number, number];
-
     addGesture({
       name: name.toUpperCase(),
       emoji: emoji || '✨',
       mappedPhrase,
-      flexThresholds: { min, max },
-      confidence: 0.96,
+      fingerFlex: {
+        thumb: Math.round((capturedFlex[0] / 1023) * 100),
+        index: Math.round((capturedFlex[1] / 1023) * 100),
+        middle: Math.round((capturedFlex[2] / 1023) * 100),
+        ring: Math.round((capturedFlex[3] / 1023) * 100),
+        pinky: Math.round((capturedFlex[4] / 1023) * 100),
+      },
+      description: `Custom recorded gesture mapped to "${mappedPhrase}"`,
+      category: 'custom',
     });
 
     // Reset form
@@ -118,208 +121,159 @@ export const SavedGesturesManager: React.FC = () => {
       </div>
 
       {/* Gesture List Table / Grid */}
-      <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#030712]/80 border-b border-white/10 text-[11px] font-orbitron text-[#94a3b8] uppercase tracking-wider">
-                <th className="py-4 px-6">EMOJI / NAME</th>
-                <th className="py-4 px-6">MAPPED VOICE PHRASE</th>
-                <th className="py-4 px-6">FLEX THRESHOLDS</th>
-                <th className="py-4 px-6 text-right">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-sm font-inter">
-              {filteredGestures.map((gesture) => (
-                <tr key={gesture.id} className="hover:bg-white/[0.02] transition-colors">
-                  
-                  {/* Emoji & Name */}
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#00f0ff]/10 border border-[#00f0ff]/30 flex items-center justify-center text-xl shadow-[0_0_10px_rgba(0,240,255,0.2)]">
-                        {gesture.emoji}
-                      </div>
-                      <div>
-                        <span className="font-orbitron font-bold text-white block">
-                          {gesture.name}
-                        </span>
-                        {gesture.isCustom && (
-                          <span className="text-[10px] font-orbitron text-[#ec4899] uppercase">
-                            USER TRAINED
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Mapped Phrase */}
-                  <td className="py-4 px-6 text-[#94a3b8]">
-                    &quot;{gesture.mappedPhrase}&quot;
-                  </td>
-
-                  {/* Sensor thresholds summary */}
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-1 text-[11px] font-mono text-[#00f0ff]">
-                      <Sliders className="w-3.5 h-3.5 text-[#94a3b8]" />
-                      <span>
-                        [{gesture.flexThresholds.min[0]}-{gesture.flexThresholds.max[0]}] ...
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => ttsService.speak(gesture.mappedPhrase)}
-                        title="Test Voice Output"
-                        className="p-2.5 rounded-lg bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] hover:bg-[#00f0ff]/20 transition-all flex items-center gap-1 text-xs font-rajdhani font-bold"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                        <span>TEST</span>
-                      </button>
-
-                      {gesture.isCustom && (
-                        <button
-                          onClick={() => deleteGesture(gesture.id)}
-                          title="Delete Gesture"
-                          className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* TRAINING MODAL */}
-      {isTrainModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#030712]/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-lg bg-[#0a0f1e] border-2 border-[#00f0ff]/40 rounded-2xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,240,255,0.3)] space-y-6">
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#00f0ff]" />
-                <h2 className="font-orbitron font-bold text-lg text-white">
-                  TRAIN NEW HARDWARE GESTURE
-                </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredGestures.map((gesture) => (
+          <div key={gesture.id} className="glass-card p-5 space-y-4 flex flex-col justify-between group">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-[#00f0ff]/10 border border-[#00f0ff]/40 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                  {gesture.emoji}
+                </div>
+                <div>
+                  <h3 className="font-orbitron font-bold text-base text-white tracking-wider">
+                    {gesture.name}
+                  </h3>
+                  <span className="text-[10px] font-orbitron text-[#00f0ff] uppercase">
+                    {gesture.category || 'essential'}
+                  </span>
+                </div>
               </div>
+
               <button
-                onClick={() => setIsTrainModalOpen(false)}
-                className="p-1 text-[#94a3b8] hover:text-white"
+                onClick={() => deleteGesture(gesture.id)}
+                title="Delete Gesture"
+                className="text-[#94a3b8] hover:text-red-400 p-1.5 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
 
-            {/* 3-Second Recording Box */}
-            <div className="p-6 rounded-2xl bg-[#030712] border border-[#00f0ff]/30 text-center space-y-4">
-              {isRecording ? (
-                <div className="space-y-3">
-                  <div className="w-16 h-16 rounded-full border-4 border-[#00f0ff] border-t-transparent animate-spin flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(0,240,255,0.5)]">
-                    <span className="font-orbitron font-extrabold text-2xl text-[#00f0ff]">{countdown}</span>
-                  </div>
-                  <p className="font-orbitron text-xs text-[#00f0ff] uppercase tracking-wider animate-pulse">
-                    HOLD GESTURE STILL FOR 3 SECONDS...
-                  </p>
-                </div>
-              ) : capturedFlex ? (
-                <div className="space-y-2 text-center">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto">
-                    <Check className="w-6 h-6" />
-                  </div>
-                  <p className="font-orbitron text-xs text-emerald-400 uppercase tracking-wider">
-                    5 SENSOR VECTORS CAPTURED!
-                  </p>
-                  <p className="text-[11px] font-mono text-[#94a3b8]">
-                    Values: [{capturedFlex.join(', ')}]
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-[#94a3b8]">
-                    Hold your physical hand in the target gesture, then click Record.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleStartTraining}
-                    className="btn-primary !py-2.5 !px-6 text-xs mx-auto"
-                  >
-                    <Radio className="w-4 h-4 animate-pulse" />
-                    <span>START 3S RECORDING</span>
-                  </button>
-                </div>
-              )}
+            <div className="p-3 rounded-xl bg-[#030712] border border-white/10 space-y-1">
+              <span className="text-[10px] text-[#94a3b8] font-orbitron uppercase block">MAPPED VOICE PHRASE</span>
+              <p className="text-xs text-white font-inter italic">&quot;{gesture.mappedPhrase}&quot;</p>
             </div>
 
-            {/* Assignment Form */}
-            <form onSubmit={handleSaveGesture} className="space-y-4">
-              <div className="grid grid-cols-4 gap-3">
-                <div className="col-span-1">
-                  <label className="block text-xs font-rajdhani font-semibold text-[#94a3b8] uppercase mb-1">
-                    EMOJI
-                  </label>
-                  <input
-                    type="text"
-                    value={emoji}
-                    onChange={(e) => setEmoji(e.target.value)}
-                    maxLength={2}
-                    className="w-full bg-[#030712] border border-[#00f0ff]/30 text-white text-center py-2.5 rounded-xl text-lg outline-none"
-                  />
+            <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+              <button
+                onClick={() => ttsService.speak(gesture.mappedPhrase)}
+                className="btn-outline !py-1.5 !px-3 text-xs flex items-center gap-1.5"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>LISTEN VOICE</span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* TRAIN NEW GESTURE MODAL */}
+      {isTrainModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-card max-w-lg w-full p-6 space-y-6 relative border-[#00f0ff]/50 bg-[#0a0f1e]/95 shadow-[0_0_50px_rgba(0,240,255,0.3)]">
+            <button
+              onClick={() => setIsTrainModalOpen(false)}
+              className="absolute top-4 right-4 text-[#94a3b8] hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-orbitron text-[#00f0ff] uppercase tracking-widest">
+                LIVE HARDWARE RECORDING
+              </span>
+              <h2 className="font-orbitron font-extrabold text-xl text-white">
+                TRAIN CUSTOM HAND GESTURE
+              </h2>
+            </div>
+
+            {/* Countdown / Capture Step */}
+            {!capturedFlex ? (
+              <div className="p-6 rounded-2xl bg-[#030712] border border-white/10 text-center space-y-4">
+                {isRecording ? (
+                  <div className="space-y-2">
+                    <div className="font-orbitron font-black text-5xl text-[#00f0ff] animate-ping">
+                      {countdown}
+                    </div>
+                    <p className="text-xs text-[#94a3b8] font-orbitron uppercase">
+                      HOLD HAND GESTURE STILL...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Radio className="w-8 h-8 text-[#00f0ff] mx-auto animate-pulse" />
+                    <p className="text-xs text-[#94a3b8] font-inter">
+                      Form your hand into the desired gesture and click below to record a 3-second live sensor snapshot.
+                    </p>
+                    <button
+                      onClick={handleStartTraining}
+                      className="btn-primary w-full py-3 text-xs font-rajdhani font-bold flex items-center justify-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>START 3-SECOND RECORDING</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSaveGesture} className="space-y-4">
+                <div className="p-3 rounded-xl bg-[#10b981]/10 border border-[#10b981]/40 flex items-center gap-2 text-[#10b981] text-xs font-orbitron">
+                  <Check className="w-4 h-4" />
+                  <span>5-FLEX SENSORS SNAPSHOT CAPTURED!</span>
                 </div>
-                <div className="col-span-3">
-                  <label className="block text-xs font-rajdhani font-semibold text-[#94a3b8] uppercase mb-1">
-                    GESTURE NAME
-                  </label>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-orbitron text-[#94a3b8]">GESTURE NAME</label>
                   <input
                     type="text"
+                    required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. TWO FINGER SWIPE"
-                    required
-                    className="w-full bg-[#030712] border border-[#00f0ff]/30 text-white px-3 py-2.5 rounded-xl font-orbitron text-xs outline-none focus:border-[#00f0ff]"
+                    placeholder="e.g. PEACE SIGN, EMERGENCY STOP..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#030712] border border-white/20 text-xs text-white outline-none focus:border-[#00f0ff]"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-rajdhani font-semibold text-[#94a3b8] uppercase mb-1">
-                  MAPPED VOICE PHRASE (TTS OUTPUT)
-                </label>
-                <input
-                  type="text"
-                  value={mappedPhrase}
-                  onChange={(e) => setMappedPhrase(e.target.value)}
-                  placeholder="e.g. Please open the main door."
-                  required
-                  className="w-full bg-[#030712] border border-[#00f0ff]/30 text-white px-3 py-2.5 rounded-xl font-inter text-sm outline-none focus:border-[#00f0ff]"
-                />
-              </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-orbitron text-[#94a3b8]">EMOJI SYMBOL</label>
+                  <input
+                    type="text"
+                    required
+                    value={emoji}
+                    onChange={(e) => setEmoji(e.target.value)}
+                    placeholder="e.g. ✌️, ✊, ✋..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#030712] border border-white/20 text-xs text-white outline-none focus:border-[#00f0ff]"
+                  />
+                </div>
 
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsTrainModalOpen(false)}
-                  className="btn-outline flex-1 text-xs"
-                >
-                  CANCEL
-                </button>
-                <button
-                  type="submit"
-                  disabled={!capturedFlex || !name || !mappedPhrase}
-                  className="btn-primary flex-1 text-xs disabled:opacity-40"
-                >
-                  SAVE GESTURE
-                </button>
-              </div>
-            </form>
+                <div className="space-y-1">
+                  <label className="text-xs font-orbitron text-[#94a3b8]">MAPPED VOICE PHRASE</label>
+                  <input
+                    type="text"
+                    required
+                    value={mappedPhrase}
+                    onChange={(e) => setMappedPhrase(e.target.value)}
+                    placeholder="e.g. Hello, I need help immediately."
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#030712] border border-white/20 text-xs text-white outline-none focus:border-[#00f0ff]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCapturedFlex(null)}
+                    className="btn-outline w-1/2 py-2.5 text-xs font-rajdhani font-bold"
+                  >
+                    RE-RECORD
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary w-1/2 py-2.5 text-xs font-rajdhani font-bold"
+                  >
+                    SAVE GESTURE
+                  </button>
+                </div>
+              </form>
+            )}
 
           </div>
         </div>
