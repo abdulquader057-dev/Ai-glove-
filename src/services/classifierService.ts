@@ -13,48 +13,43 @@ class ClassifierService {
    */
   public classify(flex: FlexSensors, imu: IMUData): { gesture: GestureItem | null; confidence: number; inferenceMs: number } {
     const startTime = performance.now();
-    const flexArray: [number, number, number, number, number] = [
-      flex.thumb,
-      flex.index,
-      flex.middle,
-      flex.ring,
-      flex.pinky,
+    const currentPercentages = [
+      Math.round((flex.thumb / 1023) * 100),
+      Math.round((flex.index / 1023) * 100),
+      Math.round((flex.middle / 1023) * 100),
+      Math.round((flex.ring / 1023) * 100),
+      Math.round((flex.pinky / 1023) * 100),
     ];
 
     // Factor IMU orientation magnitude into spatial posture check
     const imuMagnitude = Math.sqrt(imu.accel.x ** 2 + imu.accel.y ** 2 + imu.accel.z ** 2);
 
-    const allGestures = useGestureStore.getState().gestures;
+    const { gestures, setActiveGesture, addTokenToPhrase, autoSpeak } = useGestureStore.getState();
     let bestMatch: GestureItem | null = null;
-    let highestScore = -Infinity;
+    let lowestDistance = Infinity;
 
-    for (const gesture of allGestures) {
-      const { min, max } = gesture.flexThresholds;
-      let inRangeCount = 0;
-      let totalDistance = 0;
+    for (const gesture of gestures) {
+      const target = [
+        gesture.fingerFlex.thumb,
+        gesture.fingerFlex.index,
+        gesture.fingerFlex.middle,
+        gesture.fingerFlex.ring,
+        gesture.fingerFlex.pinky,
+      ];
 
+      let distanceSum = 0;
       for (let i = 0; i < 5; i++) {
-        const val = flexArray[i];
-        if (val >= min[i] && val <= max[i]) {
-          inRangeCount++;
-        }
-        // Normalize distance penalty
-        const mid = (min[i] + max[i]) / 2;
-        const range = Math.max(1, max[i] - min[i]);
-        const dist = Math.abs(val - mid) / range;
-        totalDistance += dist;
+        distanceSum += Math.abs(currentPercentages[i] - target[i]);
       }
 
-      // Adjust score with IMU vector stability multiplier
-      const score = (inRangeCount * 20) - (totalDistance * 5) + (imuMagnitude > 0.5 ? 2 : 0);
-      if (score > highestScore && inRangeCount >= 3) {
-        highestScore = score;
+      if (distanceSum < lowestDistance) {
+        lowestDistance = distanceSum;
         bestMatch = gesture;
       }
     }
 
     const inferenceMs = Math.round((performance.now() - startTime) * 10) / 10 + 1.2;
-    const confidence = bestMatch ? Math.min(99, Math.max(75, Math.round(85 + (highestScore / 10)))) : 0;
+    const confidence = bestMatch ? Math.max(70, Math.min(99, Math.round(99 - (lowestDistance / 5)))) : 0;
 
     // Apply 300ms debounce hold time to eliminate jitter
     const now = Date.now();
@@ -63,12 +58,13 @@ class ClassifierService {
         if (this.currentConfirmedGestureId !== bestMatch.id) {
           this.currentConfirmedGestureId = bestMatch.id;
           
-          // Update store state
-          useGestureStore.getState().setActiveGesture(bestMatch, confidence, inferenceMs);
-          
-          // Trigger TTS automatic speech output
+          // Update store state & append phrase token
+          setActiveGesture(bestMatch, confidence, inferenceMs);
           if (bestMatch.mappedPhrase) {
-            ttsService.speak(bestMatch.mappedPhrase);
+            addTokenToPhrase(bestMatch.mappedPhrase, confidence);
+            if (autoSpeak) {
+              ttsService.speak(bestMatch.mappedPhrase);
+            }
           }
         }
       }
@@ -81,7 +77,7 @@ class ClassifierService {
   }
 
   /**
-   * ML Upgrade interface - ready for TensorFlow.js feature vector normalization
+   * ML Feature Vector Extraction
    */
   public extractFeatureVector(flex: FlexSensors, imu: IMUData): number[] {
     return [
