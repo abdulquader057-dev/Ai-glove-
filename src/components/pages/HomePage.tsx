@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { 
   ArrowRight, 
   Sparkles, 
   Cpu, 
-  Wifi, 
   Layers, 
   Volume2, 
   Activity,
@@ -29,8 +28,6 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onExploreGlove, onTryDemo }) => {
-  const [activePipelineStep, setActivePipelineStep] = useState(0);
-
   const smartFeatures = [
     {
       icon: Hand,
