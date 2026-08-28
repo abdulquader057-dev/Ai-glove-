@@ -8,17 +8,14 @@ import {
   Cpu, 
   Wifi, 
   Sliders, 
-  Sparkles,
-  Eye,
-  EyeOff
+  Sparkles
 } from 'lucide-react';
 import { FlexSensors } from '@/types';
 
 export const ProductPage: React.FC = () => {
-  const [selectedHotspot, setSelectedHotspot] = useState<string | null>('flex');
+  const [selectedHotspot, setSelectedHotspot] = useState<string>('flex');
   const [selectedFinger, setSelectedFinger] = useState<keyof FlexSensors>('index');
   const [rotationY, setRotationY] = useState(12);
-  const [showHotspotPins, setShowHotspotPins] = useState(true);
 
   const hotspots = [
     {
@@ -26,8 +23,6 @@ export const ProductPage: React.FC = () => {
       title: '5 DIGITAL FLEX SENSORS',
       subtitle: 'Resistive Flexion Detection',
       icon: Layers,
-      x: '35%',
-      y: '22%',
       details: 'Custom carbon-matrix resistive bend sensors positioned across all 5 phalangeal joints. Changes electrical resistance from 10kΩ (straight) to 40kΩ (90° flex).',
       spec: '10-bit ADC resolution, 100,000 bend cycles rating.',
     },
@@ -36,8 +31,6 @@ export const ProductPage: React.FC = () => {
       title: '6-AXIS IMU SENSOR',
       subtitle: 'Spatial Motion & Orientation',
       icon: Activity,
-      x: '68%',
-      y: '48%',
       details: 'LSM6DS3 3-axis accelerometer (±16g) + 3-axis gyroscope (±2000 dps) tracking hand rotation, tilt speed, and spatial acceleration vectors in 3D space.',
       spec: '50Hz sampling rate, complementary quaternion filter.',
     },
@@ -46,8 +39,6 @@ export const ProductPage: React.FC = () => {
       title: 'XIAO nRF52840 MCU',
       subtitle: 'ARM Cortex-M4 Microcontroller',
       icon: Cpu,
-      x: '48%',
-      y: '72%',
       details: 'Seeed Studio XIAO nRF52840 processor running lightweight C++ embedded sensor reading, median noise filtering, and BLE GATT characteristic streaming.',
       spec: '64 MHz CPU, 1MB Flash, 256KB RAM, onboard charging.',
     },
@@ -56,8 +47,6 @@ export const ProductPage: React.FC = () => {
       title: 'BLE 5.0 TRANSCEIVER',
       subtitle: 'Nordic UART Service Protocol',
       icon: Wifi,
-      x: '62%',
-      y: '80%',
       details: 'Bluetooth 5.0 Low Energy wireless protocol delivering sub-15ms telemetry latency directly to web browser Web Bluetooth GATT client.',
       spec: '2.4 GHz ISM band, 2Mbps PHY data rate, 10m range.',
     },
@@ -85,11 +74,11 @@ export const ProductPage: React.FC = () => {
           MEET THE <span className="text-gradient-cyan">AI GLOVE</span>
         </h1>
         <p className="text-sm sm:text-base text-[#94a3b8] font-inter">
-          A wearable interface that transforms physical hand movement into machine-readable information. Click hardware hotspots to inspect individual components.
+          A wearable interface that transforms physical hand movement into machine-readable information. Select hardware components to inspect engineering specs.
         </p>
       </div>
 
-      {/* Main Interactive 3D Stage & Hotspot Inspector */}
+      {/* Main Interactive 3D Stage & Component Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* CENTER 3D GLOVE STAGE (7 cols) */}
@@ -101,17 +90,12 @@ export const ProductPage: React.FC = () => {
               <Sparkles className="w-4 h-4 animate-pulse" />
               HARDWARE COMPONENT INSPECTOR
             </span>
-
-            <button
-              onClick={() => setShowHotspotPins(!showHotspotPins)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#030712] border border-[#00f0ff]/30 text-[#00f0ff] text-[10px] font-orbitron hover:bg-[#00f0ff]/10 transition-all"
-            >
-              {showHotspotPins ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              <span>{showHotspotPins ? 'HOTSPOT PINS ON' : 'HOTSPOT PINS OFF'}</span>
-            </button>
+            <span className="text-[#94a3b8]">
+              PERSPECTIVE: {rotationY}° Y
+            </span>
           </div>
 
-          {/* 3D Glove Container */}
+          {/* Clean 3D Glove Container - Dot Overlays Removed */}
           <div 
             className="relative w-full h-[460px] flex items-center justify-center my-2"
             style={{ perspective: '1000px' }}
@@ -122,32 +106,11 @@ export const ProductPage: React.FC = () => {
             >
               <Image
                 src="/ai-glove-hero.jpg"
-                alt="AI Glove Hardware Hotspots"
+                alt="AI Glove Clean Hardware Design Render"
                 fill
                 priority
                 className="object-contain drop-shadow-[0_0_35px_rgba(0,240,255,0.6)]"
               />
-
-              {/* Sleek Interactive Hotspot Pins */}
-              {showHotspotPins && hotspots.map((h) => {
-                const isSelected = selectedHotspot === h.id;
-                return (
-                  <button
-                    key={h.id}
-                    onClick={() => setSelectedHotspot(h.id)}
-                    title={`Inspect ${h.title}`}
-                    className={`absolute w-7 h-7 rounded-full transition-all duration-300 flex items-center justify-center z-20 ${
-                      isSelected 
-                        ? 'bg-[#00f0ff] text-[#030712] scale-125 ring-4 ring-[#00f0ff]/40 shadow-[0_0_20px_#00f0ff]' 
-                        : 'bg-[#0a0f1e]/90 border border-[#00f0ff] text-[#00f0ff] hover:scale-110 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
-                    }`}
-                    style={{ top: h.y, left: h.x }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                  </button>
-                );
-              })}
-
             </div>
           </div>
 
@@ -203,7 +166,7 @@ export const ProductPage: React.FC = () => {
               </span>
             </div>
 
-            {/* Hotspot Selector Switchers */}
+            {/* Component Selector Switchers */}
             <div className="grid grid-cols-2 gap-2 pt-2">
               {hotspots.map((h) => (
                 <button
