@@ -1,28 +1,49 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Volume2, RotateCcw, Trash2, Copy, Check, Sparkles } from 'lucide-react';
+import { Volume2, RotateCcw, Trash2, Copy, Check, Sparkles, Bot, Loader2 } from 'lucide-react';
 import { useGestureStore } from '@/store/gestureStore';
 import { ttsService } from '@/services/ttsService';
+import { geminiService } from '@/services/geminiService';
 
 export const SentenceBuilder: React.FC = () => {
   const { phraseTokens, undoPhraseToken, clearPhraseTokens, isSpeaking, setSpeaking } = useGestureStore();
   const [copied, setCopied] = useState(false);
+  const [isAiRefining, setIsAiRefining] = useState(false);
+  const [refinedText, setRefinedText] = useState<string | null>(null);
 
-  const fullSentence = phraseTokens.map(t => t.word).join(' ');
+  const rawSentence = phraseTokens.map(t => t.word).join(' ');
+  const displaySentence = refinedText || rawSentence;
 
   const handleSpeakSentence = () => {
-    if (!fullSentence) return;
+    if (!displaySentence) return;
     setSpeaking(true);
-    ttsService.speak(fullSentence);
+    ttsService.speak(displaySentence);
     setTimeout(() => setSpeaking(false), 2500);
   };
 
   const handleCopySentence = () => {
-    if (!fullSentence) return;
-    navigator.clipboard.writeText(fullSentence);
+    if (!displaySentence) return;
+    navigator.clipboard.writeText(displaySentence);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleGeminiRefine = async () => {
+    if (phraseTokens.length === 0) return;
+    setIsAiRefining(true);
+    try {
+      const words = phraseTokens.map(t => t.word);
+      const refined = await geminiService.refineSentence(words);
+      setRefinedText(refined);
+      setSpeaking(true);
+      ttsService.speak(refined);
+      setTimeout(() => setSpeaking(false), 3000);
+    } catch {
+      // fallback
+    } finally {
+      setIsAiRefining(false);
+    }
   };
 
   return (
@@ -35,29 +56,50 @@ export const SentenceBuilder: React.FC = () => {
             CURRENT SENTENCE PHRASE BUILDER
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-[#00f0ff]">
-          {phraseTokens.length} WORD TOKENS
-        </span>
+        <div className="flex items-center gap-2 text-[10px] font-mono text-[#00f0ff]">
+          <span className="px-2 py-0.5 rounded bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff]">
+            GOOGLE AI STUDIO GEMINI 1.5 ACTIVE
+          </span>
+          <span>{phraseTokens.length} TOKENS</span>
+        </div>
       </div>
 
       {/* Floating Word Tokens Display Bar */}
-      <div className="min-h-[64px] p-4 rounded-2xl bg-[#030712] border border-white/15 flex flex-wrap items-center gap-3">
-        {phraseTokens.length === 0 ? (
-          <span className="text-xs text-[#94a3b8] font-inter italic">
-            Perform gestures to build floating sentence tokens here...
-          </span>
-        ) : (
-          phraseTokens.map((token, idx) => (
-            <div
-              key={token.id}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#00f0ff]/20 to-[#8b5cf6]/20 border border-[#00f0ff]/60 text-white font-orbitron font-extrabold text-sm tracking-wider shadow-[0_0_15px_rgba(0,240,255,0.3)] animate-fadeIn"
+      <div className="min-h-[64px] p-4 rounded-2xl bg-[#030712] border border-white/15 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {phraseTokens.length === 0 ? (
+            <span className="text-xs text-[#94a3b8] font-inter italic">
+              Perform gestures to build floating sentence tokens here...
+            </span>
+          ) : (
+            phraseTokens.map((token, idx) => (
+              <div
+                key={token.id}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#00f0ff]/20 to-[#8b5cf6]/20 border border-[#00f0ff]/60 text-white font-orbitron font-extrabold text-sm tracking-wider shadow-[0_0_15px_rgba(0,240,255,0.3)] animate-fadeIn"
+              >
+                <span>{token.word}</span>
+                {idx < phraseTokens.length - 1 && (
+                  <span className="text-[#00f0ff] font-normal opacity-60 ml-1">•</span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Refined Sentence Output Box if AI refined */}
+        {refinedText && (
+          <div className="p-3 rounded-xl bg-[#00f0ff]/10 border border-[#00f0ff]/40 flex items-center justify-between text-xs text-[#00f0ff] font-inter animate-fadeIn">
+            <span className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-[#00f0ff]" />
+              <strong>Gemini AI Refined Sentence:</strong> &quot;{refinedText}&quot;
+            </span>
+            <button
+              onClick={() => setRefinedText(null)}
+              className="text-[10px] font-orbitron text-[#94a3b8] hover:text-white underline uppercase"
             >
-              <span>{token.word}</span>
-              {idx < phraseTokens.length - 1 && (
-                <span className="text-[#00f0ff] font-normal opacity-60 ml-1">•</span>
-              )}
-            </div>
-          ))
+              Reset
+            </button>
+          </div>
         )}
       </div>
 
@@ -74,7 +116,10 @@ export const SentenceBuilder: React.FC = () => {
           </button>
 
           <button
-            onClick={clearPhraseTokens}
+            onClick={() => {
+              clearPhraseTokens();
+              setRefinedText(null);
+            }}
             disabled={phraseTokens.length === 0}
             className="btn-danger !py-2 !px-3 text-xs font-rajdhani font-bold flex items-center gap-1.5 disabled:opacity-40"
           >
@@ -84,6 +129,16 @@ export const SentenceBuilder: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* GOOGLE AI STUDIO GEMINI REFINE BUTTON */}
+          <button
+            onClick={handleGeminiRefine}
+            disabled={phraseTokens.length === 0 || isAiRefining}
+            className="btn-outline !py-2 !px-4 text-xs font-rajdhani font-bold flex items-center gap-2 border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf6]/20 disabled:opacity-40 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+          >
+            {isAiRefining ? <Loader2 className="w-4 h-4 animate-spin text-[#8b5cf6]" /> : <Bot className="w-4 h-4 text-[#8b5cf6]" />}
+            <span>{isAiRefining ? 'AI SYNTHESIZING...' : 'AI REFINE (GEMINI)'}</span>
+          </button>
+
           <button
             onClick={handleCopySentence}
             disabled={phraseTokens.length === 0}
