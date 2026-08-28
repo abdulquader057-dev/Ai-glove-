@@ -8,7 +8,9 @@ import {
   Cpu, 
   Wifi, 
   Sliders, 
-  Sparkles
+  Sparkles,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { FlexSensors } from '@/types';
 
@@ -16,6 +18,7 @@ export const ProductPage: React.FC = () => {
   const [selectedHotspot, setSelectedHotspot] = useState<string | null>('flex');
   const [selectedFinger, setSelectedFinger] = useState<keyof FlexSensors>('index');
   const [rotationY, setRotationY] = useState(12);
+  const [showHotspotPins, setShowHotspotPins] = useState(true);
 
   const hotspots = [
     {
@@ -98,9 +101,14 @@ export const ProductPage: React.FC = () => {
               <Sparkles className="w-4 h-4 animate-pulse" />
               HARDWARE COMPONENT INSPECTOR
             </span>
-            <span className="text-[#94a3b8]">
-              PERSPECTIVE: {rotationY}° Y
-            </span>
+
+            <button
+              onClick={() => setShowHotspotPins(!showHotspotPins)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#030712] border border-[#00f0ff]/30 text-[#00f0ff] text-[10px] font-orbitron hover:bg-[#00f0ff]/10 transition-all"
+            >
+              {showHotspotPins ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              <span>{showHotspotPins ? 'HOTSPOT PINS ON' : 'HOTSPOT PINS OFF'}</span>
+            </button>
           </div>
 
           {/* 3D Glove Container */}
@@ -113,29 +121,29 @@ export const ProductPage: React.FC = () => {
               style={{ transform: `rotateY(${rotationY}deg)` }}
             >
               <Image
-                src="/holographic-xray-hand.jpg"
+                src="/ai-glove-hero.jpg"
                 alt="AI Glove Hardware Hotspots"
                 fill
                 priority
                 className="object-contain drop-shadow-[0_0_35px_rgba(0,240,255,0.6)]"
               />
 
-              {/* Hotspot Pins */}
-              {hotspots.map((h) => {
+              {/* Sleek Interactive Hotspot Pins */}
+              {showHotspotPins && hotspots.map((h) => {
                 const isSelected = selectedHotspot === h.id;
                 return (
                   <button
                     key={h.id}
                     onClick={() => setSelectedHotspot(h.id)}
-                    className={`absolute p-2 rounded-full border transition-all duration-300 flex items-center justify-center z-20 ${
+                    title={`Inspect ${h.title}`}
+                    className={`absolute w-7 h-7 rounded-full transition-all duration-300 flex items-center justify-center z-20 ${
                       isSelected 
-                        ? 'bg-[#00f0ff] border-white text-[#030712] scale-125 shadow-[0_0_25px_#00f0ff]' 
-                        : 'bg-[#0a0f1e]/90 border-[#00f0ff]/60 text-[#00f0ff] hover:scale-110 shadow-[0_0_15px_rgba(0,240,255,0.3)]'
+                        ? 'bg-[#00f0ff] text-[#030712] scale-125 ring-4 ring-[#00f0ff]/40 shadow-[0_0_20px_#00f0ff]' 
+                        : 'bg-[#0a0f1e]/90 border border-[#00f0ff] text-[#00f0ff] hover:scale-110 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
                     }`}
                     style={{ top: h.y, left: h.x }}
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-current animate-ping absolute" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-current relative" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
                   </button>
                 );
               })}
