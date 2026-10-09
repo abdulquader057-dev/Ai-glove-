@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { Settings, Square, Repeat } from 'lucide-react';
 import { useSignovaStore } from '../../store/signovaStore';
-import { HandSchematic } from '../hardware/HandSchematic';
+import { Real3DHand } from '../hardware/Real3DHand';
 import { FingerBars } from '../hardware/FingerBars';
 import { OscilloscopeCanvas } from '../hardware/OscilloscopeCanvas';
 import { GestureReadout } from '../hardware/GestureReadout';
@@ -120,8 +120,8 @@ export const LiveView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Hand Schematic & Channel Meters (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Dynamic SVG Hand Schematic */}
-          <HandSchematic
+          {/* Real-Time 3D Hand with Visible Flex Sensors & Live Kinematics */}
+          <Real3DHand
             normalizedFingers={normalizedSensors}
             binaryBits={binaryBits}
             rawSensors={rawSensors}
