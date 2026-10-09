@@ -3,32 +3,89 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #08090A;
-  --bg-surface: #0E1114;
-  --bg-surface-elevated: #14181D;
-  --border-subtle: #1F242A;
-  --border-active: #2EE6A6;
-  --accent: #2EE6A6;
-  --accent-muted: #165B44;
-  --text-primary: #FFFFFF;
-  --text-muted: #6B7280;
-  --text-dim: #404650;
+  /* Medical Light Theme (Assistive Clinical Device) */
+  --bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --surface-2: #F0F2F5;
+  --border: #E4E7EC;
+  --border-strong: #D0D5DD;
+  --text: #101828;
+  --text-2: #475467;
+  --text-3: #98A2B3;
+  --primary: #0E7490;
+  --primary-light: #E0F2FE;
+  --accent: #F59E0B;
+  --accent-light: #FEF3C7;
+  --success: #12B76A;
+  --success-light: #D1FADF;
+  --danger: #F04438;
+  --danger-light: #FEE4E2;
+  --focus-ring: rgba(14, 116, 144, 0.35);
+
+  /* Legacy aliases for backward compatibility */
+  --bg-primary: var(--bg);
+  --bg-surface: var(--surface);
+  --bg-surface-elevated: var(--surface-2);
+  --border-subtle: var(--border);
+  --border-active: var(--primary);
+  --accent-muted: var(--primary-light);
+  --text-primary: var(--text);
+  --text-muted: var(--text-2);
+  --text-dim: var(--text-3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0B0F17;
+    --surface: #111827;
+    --surface-2: #1F2937;
+    --border: #1F2937;
+    --border-strong: #374151;
+    --text: #F9FAFB;
+    --text-2: #9CA3AF;
+    --text-3: #6B7280;
+    --primary: #14B8A6;
+    --primary-light: rgba(20, 184, 166, 0.15);
+    --accent: #FBBF24;
+    --accent-light: rgba(251, 191, 36, 0.15);
+    --success: #10B981;
+    --success-light: rgba(16, 185, 129, 0.15);
+    --danger: #EF4444;
+    --danger-light: rgba(239, 68, 68, 0.15);
+    --focus-ring: rgba(20, 184, 166, 0.35);
+
+    --bg-primary: var(--bg);
+    --bg-surface: var(--surface);
+    --bg-surface-elevated: var(--surface-2);
+    --border-subtle: var(--border);
+    --border-active: var(--primary);
+    --accent-muted: var(--primary-light);
+    --text-primary: var(--text);
+    --text-muted: var(--text-2);
+    --text-dim: var(--text-3);
+  }
 }
 
 @layer base {
+  * {
+    box-sizing: border-box;
+  }
+
   html {
     scroll-behavior: smooth;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: var(--font-geist-mono), monospace;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--bg);
+    color: var(--text);
     max-width: 100vw;
     overflow-x: hidden;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .font-sans {
@@ -37,33 +94,38 @@
 
   .font-mono {
     font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-feature-settings: "tnum" 1, "zero" 1;
   }
 }
 
-/* Custom Minimal Hardware Scrollbar */
+/* Custom Clinical Clean Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #08090A;
+  background: var(--surface-2);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1F242A;
-  border-radius: 2px;
+  background: var(--border-strong);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2EE6A6;
+  background: var(--text-3);
 }
 
-/* Gesture Snap-in Animation */
-@keyframes snapIn {
+/* Pop & Settle Keyframes */
+@keyframes scalePop {
   0% {
-    transform: scale(0.96);
-    opacity: 0.7;
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  60% {
+    transform: scale(1.02);
+    opacity: 1;
   }
   100% {
     transform: scale(1);
@@ -71,22 +133,56 @@
   }
 }
 
-.animate-snap {
-  animation: snapIn 0.12s cubic-bezier(0, 0, 0.2, 1) forwards;
+.animate-scale-pop {
+  animation: scalePop 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Flash on new detection */
-@keyframes detectionFlash {
+/* Pulse ripple for live connected status */
+@keyframes pulseRipple {
   0% {
-    background-color: rgba(46, 230, 166, 0.2);
-    border-color: #2EE6A6;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(18, 183, 106, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(18, 183, 106, 0);
   }
   100% {
-    background-color: transparent;
-    border-color: #1F242A;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(18, 183, 106, 0);
   }
 }
 
-.flash-detect {
-  animation: detectionFlash 0.3s ease-out;
+.animate-pulse-ripple {
+  animation: pulseRipple 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Audio Waveform Bar Animation */
+@keyframes waveBar {
+  0%, 100% {
+    height: 6px;
+  }
+  50% {
+    height: 18px;
+  }
+}
+
+.wave-bar-1 { animation: waveBar 0.45s ease-in-out infinite 0.05s; }
+.wave-bar-2 { animation: waveBar 0.45s ease-in-out infinite 0.18s; }
+.wave-bar-3 { animation: waveBar 0.45s ease-in-out infinite 0.30s; }
+.wave-bar-4 { animation: waveBar 0.45s ease-in-out infinite 0.12s; }
+
+/* Subtle breathing sway for hand visualization */
+@keyframes subtleBreath {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(0.4deg);
+  }
+}
+
+.animate-breath {
+  animation: subtleBreath 6s ease-in-out infinite;
+  transform-origin: 200px 480px;
 }

@@ -87,6 +87,14 @@ class SimulationService {
     this.activeTargetFlex = [...preset.flex];
   }
 
+  /**
+   * Set target gesture by 0-based index (0 to 7)
+   */
+  public triggerGestureByIndex(index: number): void {
+    const key = String(index + 1);
+    this.triggerPreset(key);
+  }
+
   public startSimulation(): void {
     if (this.isSimulating) return;
     this.isSimulating = true;

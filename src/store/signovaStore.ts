@@ -18,6 +18,12 @@ export interface CalibrationState {
   thresholds: number[];
 }
 
+export interface ToastMessage {
+  id: string;
+  message: string;
+  type: 'info' | 'success' | 'warn' | 'error';
+}
+
 const CALIBRATION_STORAGE_KEY = 'signova_calibration_v1';
 const HISTORY_STORAGE_KEY = 'signova_history_v1';
 const ENGINE_STORAGE_KEY = 'signova_engine_source_v1';
@@ -90,6 +96,8 @@ interface SignovaStore {
   isReplaying: boolean;
   webSerialSupported: boolean;
   webBleSupported: boolean;
+  streamHz: number;
+  lastPacketTime: number;
 
   // Sensor Telemetry
   rawSensors: number[];
@@ -108,22 +116,32 @@ interface SignovaStore {
   justConfirmed: boolean;
   classifierSource: 'threshold' | 'random_forest';
 
+  // Audio State
+  isMuted: boolean;
+  isSpeaking: boolean;
+  toggleMute: () => void;
+  setClassifierSource: (source: 'threshold' | 'random_forest') => void;
+
   // Calibration State
   calibration: CalibrationState;
   setStraightCalibration: (values: number[]) => void;
   setBentCalibration: (values: number[]) => void;
   resetCalibration: () => void;
 
+  // Modals & Popups
+  isCalibrationOpen: boolean;
+  setCalibrationOpen: (open: boolean) => void;
+  isSettingsOpen: boolean;
+  setSettingsOpen: (open: boolean) => void;
+  toast: ToastMessage | null;
+  showToast: (message: string, type?: 'info' | 'success' | 'warn' | 'error') => void;
+  clearToast: () => void;
+
   // History & Telemetry Log
   history: TelemetryPacket[];
   clearHistory: () => void;
   exportHistoryJSON: () => void;
   exportHistoryCSV: () => void;
-
-  // Audio & Settings
-  isMuted: boolean;
-  toggleMute: () => void;
-  setClassifierSource: (source: 'threshold' | 'random_forest') => void;
 
   // Actions
   connectSerial: () => Promise<boolean>;
@@ -147,6 +165,8 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   isReplaying: false,
   webSerialSupported: typeof window !== 'undefined' && 'serial' in navigator,
   webBleSupported: typeof window !== 'undefined' && 'bluetooth' in navigator,
+  streamHz: 0,
+  lastPacketTime: 0,
 
   rawSensors: [250, 260, 240],
   smoothedSensors: [250, 260, 240],
@@ -163,7 +183,26 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   justConfirmed: false,
   classifierSource: loadSavedEngine(),
 
+  isMuted: speechService.getSettings().muted,
+  isSpeaking: false,
+
   calibration: loadSavedCalibration(),
+
+  isCalibrationOpen: false,
+  setCalibrationOpen: (open) => set({ isCalibrationOpen: open }),
+  isSettingsOpen: false,
+  setSettingsOpen: (open) => set({ isSettingsOpen: open }),
+  toast: null,
+  showToast: (message, type = 'info') => {
+    const id = `t_${Date.now()}`;
+    set({ toast: { id, message, type } });
+    setTimeout(() => {
+      if (get().toast?.id === id) {
+        set({ toast: null });
+      }
+    }, 3200);
+  },
+  clearToast: () => set({ toast: null }),
 
   setStraightCalibration: (straightValues) => {
     const { calibration } = get();
@@ -175,6 +214,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(updated));
     }
     set({ calibration: updated });
+    get().showToast('Straight calibration updated & saved', 'success');
   },
 
   setBentCalibration: (bentValues) => {
@@ -187,6 +227,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(updated));
     }
     set({ calibration: updated });
+    get().showToast('Bent calibration updated & saved', 'success');
   },
 
   resetCalibration: () => {
@@ -194,6 +235,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.removeItem(CALIBRATION_STORAGE_KEY);
     }
     set({ calibration: DEFAULT_CALIBRATION });
+    get().showToast('Calibration reset to factory defaults', 'warn');
   },
 
   history: loadSavedHistory(),
@@ -203,6 +245,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.removeItem(HISTORY_STORAGE_KEY);
     }
     set({ history: [] });
+    get().showToast('History log cleared', 'info');
   },
 
   exportHistoryJSON: () => {
@@ -214,6 +257,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     a.download = `signova-session-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    get().showToast('Session exported as JSON', 'success');
   },
 
   exportHistoryCSV: () => {
@@ -241,13 +285,13 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     a.download = `signova-session-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    get().showToast('Session exported as CSV', 'success');
   },
-
-  isMuted: speechService.getSettings().muted,
 
   toggleMute: () => {
     const next = speechService.toggleMute();
     set({ isMuted: next });
+    get().showToast(next ? 'Audio muted' : 'Voice synthesis active', 'info');
   },
 
   setClassifierSource: (source) => {
@@ -255,6 +299,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.setItem(ENGINE_STORAGE_KEY, source);
     }
     set({ classifierSource: source });
+    get().showToast(`Classifier switched to ${source === 'random_forest' ? 'Random Forest' : 'Calibrated Thresholds'}`, 'info');
   },
 
   connectSerial: async () => {
@@ -266,7 +311,9 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
         statusMessage: `Streaming Seeed XIAO / Arduino Uno @ ${CONFIG.SERIAL_BAUD_RATE} baud`,
         activeView: 'live',
         isSimulation: false,
+        streamHz: 50,
       });
+      get().showToast('Connected to glove via USB Serial (115200 baud)', 'success');
     }
     return success;
   },
@@ -277,7 +324,9 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       connectionStatus: 'disconnected',
       connectionMedium: 'none',
       statusMessage: 'Serial port disconnected.',
+      streamHz: 0,
     });
+    get().showToast('Serial port disconnected', 'info');
   },
 
   connectBLE: async () => {
@@ -289,7 +338,9 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
         statusMessage: 'Streaming Seeed XIAO nRF52840 via Web Bluetooth (50Hz)',
         activeView: 'live',
         isSimulation: false,
+        streamHz: 50,
       });
+      get().showToast('Connected to Seeed XIAO via Bluetooth LE', 'success');
     }
     return success;
   },
@@ -300,7 +351,9 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       connectionStatus: 'disconnected',
       connectionMedium: 'none',
       statusMessage: 'Bluetooth disconnected.',
+      streamHz: 0,
     });
+    get().showToast('Bluetooth disconnected', 'info');
   },
 
   startSimulation: () => {
@@ -311,7 +364,9 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       statusMessage: 'SIMULATION ACTIVE — Keys 1-8 trigger gestures',
       isSimulation: true,
       activeView: 'live',
+      streamHz: 50,
     });
+    get().showToast('Simulation Mode Active. Press keys 1-8 to trigger gestures.', 'info');
   },
 
   stopSimulation: () => {
@@ -322,18 +377,33 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       statusMessage: 'Simulation stopped.',
       isSimulation: false,
       isReplaying: false,
+      streamHz: 0,
     });
+    get().showToast('Simulation stopped', 'info');
   },
 
   toggleReplay: () => {
     const isReplaying = simulationService.toggleReplayTrace();
     set({ isReplaying });
+    get().showToast(isReplaying ? 'Sample data trace replay started' : 'Replay stopped', 'info');
   },
 
   processIncomingPacket: (packet: RawSerialPacket) => {
     const state = get();
     const raw = packet.raw;
     const now = performance.now();
+
+    // Measure live stream Hz
+    let currentHz = state.streamHz;
+    if (state.lastPacketTime > 0) {
+      const delta = now - state.lastPacketTime;
+      if (delta > 2 && delta < 500) {
+        const instantHz = Math.round(1000 / delta);
+        currentHz = Math.round((currentHz === 0 ? instantHz : currentHz) * 0.9 + instantHz * 0.1);
+      }
+    } else {
+      currentHz = 50;
+    }
 
     // 1. Moving average smoothing (5 samples)
     const smoothed = filterService.filter(raw);
@@ -453,6 +523,8 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       holdProgress: nextHoldProgress,
       realLatencyMs: cycleLatency > 0 ? cycleLatency : state.realLatencyMs,
       justConfirmed: triggeredFlash,
+      streamHz: currentHz,
+      lastPacketTime: now,
     });
 
     if (triggeredFlash) {
@@ -463,7 +535,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   },
 }));
 
-// Wire up global serial packet listener to store
+// Wire up global listeners to store
 if (typeof window !== 'undefined') {
   serialService.onPacket((packet) => {
     useSignovaStore.getState().processIncomingPacket(packet);
@@ -473,6 +545,7 @@ if (typeof window !== 'undefined') {
     useSignovaStore.setState({
       connectionStatus: status,
       statusMessage: message || status,
+      streamHz: status === 'connected' ? 50 : 0,
     });
   });
 
@@ -482,17 +555,27 @@ if (typeof window !== 'undefined') {
         connectionStatus: 'connected',
         connectionMedium: 'ble',
         statusMessage: message || 'BLE Connected',
+        streamHz: 50,
       });
     } else if (useSignovaStore.getState().connectionMedium === 'ble') {
       useSignovaStore.setState({
         connectionStatus: 'disconnected',
         connectionMedium: 'none',
         statusMessage: message || 'BLE Disconnected',
+        streamHz: 0,
       });
     }
   });
 
   simulationService.onStateChange((isSimulating, isReplaying) => {
-    useSignovaStore.setState({ isSimulation: isSimulating, isReplaying });
+    useSignovaStore.setState({
+      isSimulation: isSimulating,
+      isReplaying,
+      streamHz: isSimulating ? 50 : 0,
+    });
+  });
+
+  speechService.onSpeakingChange((isSpeaking) => {
+    useSignovaStore.setState({ isSpeaking });
   });
 }

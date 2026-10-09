@@ -188,6 +188,17 @@ class SpeechService {
     this.speakText(sampleText);
   }
 
+  private speakingListeners: Set<(isSpeaking: boolean) => void> = new Set();
+
+  public onSpeakingChange(fn: (isSpeaking: boolean) => void): () => void {
+    this.speakingListeners.add(fn);
+    return () => this.speakingListeners.delete(fn);
+  }
+
+  private notifySpeaking(isSpeaking: boolean): void {
+    this.speakingListeners.forEach(fn => fn(isSpeaking));
+  }
+
   private speakText(text: string): void {
     if (!this.synth) return;
 
@@ -200,9 +211,15 @@ class SpeechService {
       utterance.rate = this.rate;
       utterance.pitch = this.pitch;
       utterance.lang = this.selectedVoice?.lang || 'en-US';
+
+      utterance.onstart = () => this.notifySpeaking(true);
+      utterance.onend = () => this.notifySpeaking(false);
+      utterance.onerror = () => this.notifySpeaking(false);
+
       this.synth.speak(utterance);
     } catch (err) {
       console.warn('speechSynthesis error:', err);
+      this.notifySpeaking(false);
     }
   }
 
