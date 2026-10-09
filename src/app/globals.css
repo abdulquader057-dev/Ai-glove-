@@ -3,19 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #030712;
-  --bg-secondary: #0a0f1e;
-  --bg-card: rgba(10, 15, 30, 0.7);
-  --accent-cyan: #00f0ff;
-  --accent-blue: #0066ff;
-  --accent-purple: #8b5cf6;
-  --accent-pink: #ec4899;
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --border-glow: rgba(0, 240, 255, 0.25);
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
+  --bg-primary: #08090A;
+  --bg-surface: #0E1114;
+  --bg-surface-elevated: #14181D;
+  --border-subtle: #1F242A;
+  --border-active: #2EE6A6;
+  --accent: #2EE6A6;
+  --accent-muted: #165B44;
+  --text-primary: #FFFFFF;
+  --text-muted: #6B7280;
+  --text-dim: #404650;
 }
 
 @layer base {
@@ -23,7 +20,7 @@
     scroll-behavior: smooth;
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-inter), sans-serif;
+    font-family: var(--font-geist-mono), monospace;
   }
 
   body {
@@ -34,162 +31,62 @@
     min-height: 100vh;
   }
 
-  /* Font styling helpers */
-  .font-orbitron {
-    font-family: var(--font-orbitron), sans-serif;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
+  .font-sans {
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
-  .font-rajdhani {
-    font-family: var(--font-rajdhani), sans-serif;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .font-mono {
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Minimal Hardware Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #030712;
+  background: #08090A;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 240, 255, 0.3);
-  border-radius: 4px;
+  background: #1F242A;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 255, 0.6);
+  background: #2EE6A6;
 }
 
-/* BUTTON SPECIFICATIONS */
-.btn-primary {
-  background: linear-gradient(135deg, #00f0ff, #0066ff);
-  color: #030712;
-  font-family: var(--font-rajdhani), sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: 14px 32px;
-  border-radius: 10px;
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  border: none;
+/* Gesture Snap-in Animation */
+@keyframes snapIn {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 40px rgba(0, 240, 255, 0.5);
-  filter: brightness(1.1);
+.animate-snap {
+  animation: snapIn 0.12s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid #00f0ff;
-  color: #00f0ff;
-  font-family: var(--font-rajdhani), sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: 14px 32px;
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
+/* Flash on new detection */
+@keyframes detectionFlash {
+  0% {
+    background-color: rgba(46, 230, 166, 0.2);
+    border-color: #2EE6A6;
+  }
+  100% {
+    background-color: transparent;
+    border-color: #1F242A;
+  }
 }
 
-.btn-outline:hover {
-  background: rgba(0, 240, 255, 0.1);
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #ffffff;
-  font-family: var(--font-rajdhani), sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: 14px 32px;
-  border-radius: 10px;
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 40px rgba(239, 68, 68, 0.5);
-}
-
-/* GLASSMORPHISM CARD */
-.glass-card {
-  background: rgba(10, 15, 30, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 240, 255, 0.18);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  transition: all 0.3s ease;
-}
-
-.glass-card:hover {
-  border-color: rgba(0, 240, 255, 0.4);
-  box-shadow: 0 12px 40px 0 rgba(0, 240, 255, 0.2);
-}
-
-/* GRADIENT TEXT */
-.text-gradient-cyan {
-  background: linear-gradient(135deg, #00f0ff 0%, #0066ff 50%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.text-gradient-pink {
-  background: linear-gradient(135deg, #00f0ff 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* BACKGROUND GRID & GLOW EFFECTS */
-.bg-grid-pattern {
-  background-size: 50px 50px;
-  background-image: 
-    linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-}
-
-.radial-glow {
-  background: radial-gradient(circle at 50% 40%, rgba(0, 240, 255, 0.15) 0%, rgba(0, 102, 255, 0.05) 45%, transparent 70%);
-}
-
-/* TERMINAL LOG STYLING */
-.terminal-stream {
-  font-family: var(--font-orbitron), monospace;
-  background: rgba(3, 7, 18, 0.95);
-  border: 1px solid rgba(0, 240, 255, 0.2);
-  color: #00f0ff;
-  border-radius: 8px;
+.flash-detect {
+  animation: detectionFlash 0.3s ease-out;
 }

@@ -1,13 +1,16 @@
-import { useHardwareStore } from '@/store/hardwareStore';
-import { classifierService } from '@/services/classifierService';
-import { FlexSensors, IMUData } from '@/types';
+// Web Bluetooth (BLE) Service for SIGNOVA Glove
+// Team Syntropy - Seeed XIAO nRF52840 Sense
+// Supports Nordic UART Service (NUS) wireless streaming of 3 flex sensors (Index, Middle, Ring)
+// Seamlessly decodes both ASCII "f1,f2,f3\n" and binary uint16 packets.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { serialService } from './serialService';
 
 // Nordic UART Service & Characteristic UUIDs for XIAO nRF52840
-const NORDIC_UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const UART_TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+export const NORDIC_UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+export const UART_TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-// Global Web Bluetooth interfaces for environments without ambient DOM Bluetooth types
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type BLEServer = any;
 type BLECharacteristic = any;
 type BLEDevice = any;
@@ -16,135 +19,153 @@ class BLEService {
   private gattServer: BLEServer | null = null;
   private txCharacteristic: BLECharacteristic | null = null;
   private device: BLEDevice | null = null;
+  private isConnected: boolean = false;
+  private textBuffer: string = '';
+  private textDecoder: TextDecoder = new TextDecoder();
+  private statusListeners: Set<(connected: boolean, msg?: string) => void> = new Set();
 
   public isSupported(): boolean {
     return typeof window !== 'undefined' && 'bluetooth' in navigator;
   }
 
-  public async connect(): Promise<boolean> {
-    const store = useHardwareStore.getState();
+  public getIsConnected(): boolean {
+    return this.isConnected;
+  }
 
+  public onStatusChange(callback: (connected: boolean, msg?: string) => void): () => void {
+    this.statusListeners.add(callback);
+    return () => this.statusListeners.delete(callback);
+  }
+
+  private notifyStatus(connected: boolean, msg?: string): void {
+    this.isConnected = connected;
+    this.statusListeners.forEach((cb) => cb(connected, msg));
+  }
+
+  /**
+   * Request Bluetooth device advertising Nordic UART Service
+   */
+  public async connect(): Promise<boolean> {
     if (!this.isSupported()) {
-      store.setBleSupported(false);
-      store.addLog('ERROR: Web Bluetooth API is not supported in this browser.', 'error');
+      this.notifyStatus(false, 'Web Bluetooth API is not supported in this browser.');
       return false;
     }
 
     try {
-      store.setConnectionState('scanning');
-      store.addLog('BLE_SCAN: Requesting device with Nordic UART Service filters...', 'info');
-
-      // Native browser Bluetooth device request
+      this.notifyStatus(false, 'Scanning for Seeed XIAO BLE / Signova Glove...');
       const navBluetooth = (navigator as any).bluetooth;
+
       this.device = await navBluetooth.requestDevice({
         filters: [
-          { namePrefix: 'Sensasign' },
-          { namePrefix: 'XIAO' },
           { services: [NORDIC_UART_SERVICE_UUID] },
+          { namePrefix: 'SIGNOVA' },
+          { namePrefix: 'XIAO' },
+          { namePrefix: 'Syntropy' },
+          { namePrefix: 'Glove' },
         ],
         optionalServices: [NORDIC_UART_SERVICE_UUID, 'battery_service'],
       });
 
-      store.addLog(`BLE_FOUND: Device "${this.device?.name || 'Sensasign Glove'}" selected`, 'info');
-      store.setConnectionState('pairing');
-      store.setDeviceDetails(this.device?.name || 'Sensasign-XIAO-nRF52840', -62, 98);
-
-      // Listen for disconnect events
-      this.device?.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
-
-      // Connect to GATT Server
-      store.addLog('GATT_PAIRING: Establishing GATT Connection...', 'info');
-      this.gattServer = await this.device?.gatt?.connect() || null;
-
-      if (!this.gattServer) {
-        throw new Error('Could not establish GATT connection to device');
+      if (!this.device) {
+        throw new Error('Device selection cancelled');
       }
 
-      // Primary Service Lookup
+      this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
+
+      this.notifyStatus(false, `Connecting to ${this.device.name || 'XIAO Glove'}...`);
+      this.gattServer = (await this.device.gatt?.connect()) || null;
+
+      if (!this.gattServer) {
+        throw new Error('Failed to connect to GATT server');
+      }
+
+      // Look up Nordic UART Service
       const service = await this.gattServer.getPrimaryService(NORDIC_UART_SERVICE_UUID);
       this.txCharacteristic = await service.getCharacteristic(UART_TX_CHARACTERISTIC_UUID);
 
-      // Start characteristic notifications
+      // Subscribe to live packet notifications
       await this.txCharacteristic.startNotifications();
-      this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotification.bind(this));
+      this.txCharacteristic.addEventListener(
+        'characteristicvaluechanged',
+        this.handleNotification.bind(this)
+      );
 
-      store.setConnectionState('connected');
-      store.addLog('GATT_CONNECTED: Real-time telemetry stream active at 50Hz', 'info');
-
+      this.notifyStatus(true, `Connected to ${this.device.name || 'Seeed XIAO'} via BLE`);
       return true;
-    } catch (err: unknown) {
-      console.error('BLE Connection error:', err);
-      const errorMsg = err instanceof Error ? err.message : 'User cancelled device selection or connection timed out';
-      store.setConnectionState('disconnected');
-      store.addLog(`BLE_ERROR: ${errorMsg}`, 'error');
+    } catch (err: any) {
+      if (err.name === 'NotFoundError') {
+        this.notifyStatus(false, 'Bluetooth pairing cancelled by user');
+      } else {
+        console.warn('BLE connection error:', err);
+        this.notifyStatus(false, err.message || 'BLE connection failed');
+      }
       return false;
     }
   }
 
-  private handleNotification(event: Event) {
+  /**
+   * Process incoming BLE notification chunks
+   */
+  private handleNotification(event: Event): void {
     const target = event.target as any;
-    if (!target.value) return;
+    if (!target || !target.value) return;
 
     const dataView: DataView = target.value;
-    const store = useHardwareStore.getState();
+    const receiveTime = performance.now();
 
-    // Parse packet format: 5 uint16 (flex 0-1023) + 3 int16 (accel) + 3 int16 (gyro)
-    if (dataView.byteLength >= 10) {
-      const flex: FlexSensors = {
-        thumb: dataView.getUint16(0, true) % 1024,
-        index: dataView.getUint16(2, true) % 1024,
-        middle: dataView.getUint16(4, true) % 1024,
-        ring: dataView.getUint16(6, true) % 1024,
-        pinky: dataView.getUint16(8, true) % 1024,
-      };
+    // Check if packet is binary 3 x uint16 (6 bytes: index, middle, ring ADC)
+    if (dataView.byteLength === 6) {
+      const idx = dataView.getUint16(0, true);
+      const mid = dataView.getUint16(2, true);
+      const rng = dataView.getUint16(4, true);
+      serialService.parseLine(`${idx},${mid},${rng}`, receiveTime);
+      return;
+    }
 
-      let imu: IMUData = {
-        accel: { x: 0.05, y: 0.95, z: 0.12 },
-        gyro: { x: 0.5, y: -0.2, z: 0.1 },
-      };
+    // Otherwise, decode as UTF-8 string chunk "f1,f2,f3\n"
+    const textChunk = this.textDecoder.decode(dataView, { stream: true });
+    this.textBuffer += textChunk;
 
-      if (dataView.byteLength >= 22) {
-        imu = {
-          accel: {
-            x: Math.round((dataView.getInt16(10, true) / 100) * 100) / 100,
-            y: Math.round((dataView.getInt16(12, true) / 100) * 100) / 100,
-            z: Math.round((dataView.getInt16(14, true) / 100) * 100) / 100,
-          },
-          gyro: {
-            x: Math.round((dataView.getInt16(16, true) / 10) * 10) / 10,
-            y: Math.round((dataView.getInt16(18, true) / 10) * 10) / 10,
-            z: Math.round((dataView.getInt16(20, true) / 10) * 10) / 10,
-          },
-        };
+    let newlineIndex: number;
+    while ((newlineIndex = this.textBuffer.indexOf('\n')) >= 0) {
+      const line = this.textBuffer.slice(0, newlineIndex).trim();
+      this.textBuffer = this.textBuffer.slice(newlineIndex + 1);
+
+      if (line.length > 0) {
+        serialService.parseLine(line, receiveTime);
       }
-
-      // Format hex dump string for terminal
-      const hexBytes = Array.from(new Uint8Array(dataView.buffer))
-        .map((b) => '0x' + b.toString(16).padStart(2, '0').toUpperCase())
-        .join(' ');
-
-      store.updateSensors(flex, imu);
-      store.addLog(`[BLE TELEMETRY] ${hexBytes.slice(0, 36)}...`, 'data');
-
-      // Run gesture classification on incoming telemetry
-      classifierService.classify(flex, imu);
     }
   }
 
-  public disconnect() {
-    if (this.device && this.device.gatt?.connected) {
-      this.device.gatt.disconnect();
+  public async disconnect(): Promise<void> {
+    if (this.txCharacteristic) {
+      try {
+        await this.txCharacteristic.stopNotifications();
+      } catch {
+        // Ignore
+      }
+      this.txCharacteristic = null;
     }
+
+    if (this.gattServer && this.gattServer.connected) {
+      try {
+        this.gattServer.disconnect();
+      } catch {
+        // Ignore
+      }
+      this.gattServer = null;
+    }
+
+    this.notifyStatus(false, 'BLE Disconnected');
+  }
+
+  private onDisconnected(): void {
+    this.isConnected = false;
     this.gattServer = null;
     this.txCharacteristic = null;
-    this.device = null;
-    useHardwareStore.getState().disconnect();
-  }
-
-  private onDisconnected() {
-    useHardwareStore.getState().disconnect();
-    useHardwareStore.getState().addLog('GATT_LOST: Hardware device disconnected', 'warn');
+    this.notifyStatus(false, 'Bluetooth connection lost');
   }
 }
 
 export const bleService = new BLEService();
+export default bleService;
