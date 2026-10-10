@@ -34,15 +34,20 @@ export const CONFIG = {
   },
 
   GESTURE_DESCRIPTIONS: {
-    'HELLO': 'All 3 Straight',
-    'YES': 'All 3 Bent',
-    'ONE': 'Index Straight, Middle & Ring Bent',
-    'VICTORY': 'Index & Middle Straight, Ring Bent',
-    'OK': 'Middle & Ring Straight, Index Bent',
-    'THREE': 'Ring Straight, Index & Middle Bent',
-    'NO': 'Middle Straight, Index & Ring Bent',
-    'ROCK': 'Index & Ring Straight, Middle Bent',
+    'HELLO':   'All 3 fingers straight',
+    'YES':     'All 3 fingers bent',
+    'ONE':     'Index straight, middle & ring bent',
+    'VICTORY': 'Index & middle straight, ring bent',
+    'OK':      'Middle & ring straight, index bent',
+    'THREE':   'Ring straight, index & middle bent',
+    'NO':      'Middle straight, index & ring bent',
+    'ROCK':    'Index & ring straight, middle bent',
   },
+
+  // BLE UUIDs (Nordic UART Service) — MUST be lowercase for Web Bluetooth API
+  BLE_SERVICE_UUID: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+  BLE_TX_CHAR_UUID: '6e400003-b5a3-f393-e0a9-e50e24dcca9e', // Notify: device → browser
+  BLE_RX_CHAR_UUID: '6e400002-b5a3-f393-e0a9-e50e24dcca9e', // Write:  browser → device
 
   COLORS: {
     bg: '#08090A',

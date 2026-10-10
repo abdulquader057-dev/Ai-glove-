@@ -3,10 +3,10 @@
 // Team Syntropy
 
 import { CONFIG } from '../config.js';
-import { score as rfScore, CLASSES as RF_CLASSES } from './rf_model.js';
+import { score as rfScore, CLASSES as RF_CLASSES, MODEL_IS_PLACEHOLDER as RF_PLACEHOLDER } from './rf_model.js';
 
-// Flag indicating whether the RF model is a calibrated baseline or custom trained
-export const MODEL_IS_PLACEHOLDER = false;
+// Re-export the placeholder flag so the UI badge can read it
+export const MODEL_IS_PLACEHOLDER = RF_PLACEHOLDER;
 
 /**
  * Classify 3-finger flex readings

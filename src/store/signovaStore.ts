@@ -18,12 +18,6 @@ export interface CalibrationState {
   thresholds: number[];
 }
 
-export interface ToastMessage {
-  id: string;
-  message: string;
-  type: 'info' | 'success' | 'warn' | 'error';
-}
-
 const CALIBRATION_STORAGE_KEY = 'signova_calibration_v1';
 const HISTORY_STORAGE_KEY = 'signova_history_v1';
 const ENGINE_STORAGE_KEY = 'signova_engine_source_v1';
@@ -75,7 +69,7 @@ function loadSavedHistory(): TelemetryPacket[] {
   try {
     const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved).slice(0, 50);
+      return JSON.parse(saved).slice(0, 500);
     }
   } catch {
     // Fallback
@@ -96,8 +90,6 @@ interface SignovaStore {
   isReplaying: boolean;
   webSerialSupported: boolean;
   webBleSupported: boolean;
-  streamHz: number;
-  lastPacketTime: number;
 
   // Sensor Telemetry
   rawSensors: number[];
@@ -116,32 +108,22 @@ interface SignovaStore {
   justConfirmed: boolean;
   classifierSource: 'threshold' | 'random_forest';
 
-  // Audio State
-  isMuted: boolean;
-  isSpeaking: boolean;
-  toggleMute: () => void;
-  setClassifierSource: (source: 'threshold' | 'random_forest') => void;
-
   // Calibration State
   calibration: CalibrationState;
   setStraightCalibration: (values: number[]) => void;
   setBentCalibration: (values: number[]) => void;
   resetCalibration: () => void;
 
-  // Modals & Popups
-  isCalibrationOpen: boolean;
-  setCalibrationOpen: (open: boolean) => void;
-  isSettingsOpen: boolean;
-  setSettingsOpen: (open: boolean) => void;
-  toast: ToastMessage | null;
-  showToast: (message: string, type?: 'info' | 'success' | 'warn' | 'error') => void;
-  clearToast: () => void;
-
   // History & Telemetry Log
   history: TelemetryPacket[];
   clearHistory: () => void;
   exportHistoryJSON: () => void;
   exportHistoryCSV: () => void;
+
+  // Audio & Settings
+  isMuted: boolean;
+  toggleMute: () => void;
+  setClassifierSource: (source: 'threshold' | 'random_forest') => void;
 
   // Actions
   connectSerial: () => Promise<boolean>;
@@ -160,13 +142,11 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
 
   connectionStatus: 'disconnected',
   connectionMedium: 'none',
-  statusMessage: 'Ready for hardware connection (Serial 115200 baud or BLE)',
+  statusMessage: 'Ready — connect via USB Serial (115200 baud) or BLE',
   isSimulation: false,
   isReplaying: false,
   webSerialSupported: typeof window !== 'undefined' && 'serial' in navigator,
   webBleSupported: typeof window !== 'undefined' && 'bluetooth' in navigator,
-  streamHz: 0,
-  lastPacketTime: 0,
 
   rawSensors: [250, 260, 240],
   smoothedSensors: [250, 260, 240],
@@ -183,26 +163,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   justConfirmed: false,
   classifierSource: loadSavedEngine(),
 
-  isMuted: speechService.getSettings().muted,
-  isSpeaking: false,
-
   calibration: loadSavedCalibration(),
-
-  isCalibrationOpen: false,
-  setCalibrationOpen: (open) => set({ isCalibrationOpen: open }),
-  isSettingsOpen: false,
-  setSettingsOpen: (open) => set({ isSettingsOpen: open }),
-  toast: null,
-  showToast: (message, type = 'info') => {
-    const id = `t_${Date.now()}`;
-    set({ toast: { id, message, type } });
-    setTimeout(() => {
-      if (get().toast?.id === id) {
-        set({ toast: null });
-      }
-    }, 3200);
-  },
-  clearToast: () => set({ toast: null }),
 
   setStraightCalibration: (straightValues) => {
     const { calibration } = get();
@@ -214,7 +175,6 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(updated));
     }
     set({ calibration: updated });
-    get().showToast('Straight calibration updated & saved', 'success');
   },
 
   setBentCalibration: (bentValues) => {
@@ -227,7 +187,6 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(updated));
     }
     set({ calibration: updated });
-    get().showToast('Bent calibration updated & saved', 'success');
   },
 
   resetCalibration: () => {
@@ -235,7 +194,6 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.removeItem(CALIBRATION_STORAGE_KEY);
     }
     set({ calibration: DEFAULT_CALIBRATION });
-    get().showToast('Calibration reset to factory defaults', 'warn');
   },
 
   history: loadSavedHistory(),
@@ -245,7 +203,6 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.removeItem(HISTORY_STORAGE_KEY);
     }
     set({ history: [] });
-    get().showToast('History log cleared', 'info');
   },
 
   exportHistoryJSON: () => {
@@ -257,7 +214,6 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     a.download = `signova-session-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    get().showToast('Session exported as JSON', 'success');
   },
 
   exportHistoryCSV: () => {
@@ -285,13 +241,13 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     a.download = `signova-session-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    get().showToast('Session exported as CSV', 'success');
   },
+
+  isMuted: speechService.getSettings().muted,
 
   toggleMute: () => {
     const next = speechService.toggleMute();
     set({ isMuted: next });
-    get().showToast(next ? 'Audio muted' : 'Voice synthesis active', 'info');
   },
 
   setClassifierSource: (source) => {
@@ -299,21 +255,21 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       localStorage.setItem(ENGINE_STORAGE_KEY, source);
     }
     set({ classifierSource: source });
-    get().showToast(`Classifier switched to ${source === 'random_forest' ? 'Random Forest' : 'Calibrated Thresholds'}`, 'info');
   },
 
   connectSerial: async () => {
+    set({ connectionStatus: 'connecting', statusMessage: 'Selecting serial port...' });
     const success = await serialService.connect();
     if (success) {
       set({
         connectionStatus: 'connected',
         connectionMedium: 'usb_serial',
-        statusMessage: `Streaming Seeed XIAO / Arduino Uno @ ${CONFIG.SERIAL_BAUD_RATE} baud`,
+        statusMessage: `Streaming @ ${CONFIG.SERIAL_BAUD_RATE} baud`,
         activeView: 'live',
         isSimulation: false,
-        streamHz: 50,
       });
-      get().showToast('Connected to glove via USB Serial (115200 baud)', 'success');
+    } else {
+      set({ connectionStatus: 'disconnected', statusMessage: 'Serial connection failed or cancelled.' });
     }
     return success;
   },
@@ -324,23 +280,27 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       connectionStatus: 'disconnected',
       connectionMedium: 'none',
       statusMessage: 'Serial port disconnected.',
-      streamHz: 0,
+      activeView: 'connect',
     });
-    get().showToast('Serial port disconnected', 'info');
   },
 
   connectBLE: async () => {
+    set({ connectionStatus: 'connecting', statusMessage: 'Opening BLE device picker...' });
     const success = await bleService.connect();
     if (success) {
       set({
         connectionStatus: 'connected',
         connectionMedium: 'ble',
-        statusMessage: 'Streaming Seeed XIAO nRF52840 via Web Bluetooth (50Hz)',
+        statusMessage: 'Streaming via Web Bluetooth (Nordic UART ~50 Hz)',
         activeView: 'live',
         isSimulation: false,
-        streamHz: 50,
       });
-      get().showToast('Connected to Seeed XIAO via Bluetooth LE', 'success');
+    } else {
+      // Don't overwrite if the BLE service already set a richer error message via onStatusChange
+      const current = useSignovaStore.getState();
+      if (current.connectionStatus !== 'error') {
+        set({ connectionStatus: 'disconnected', statusMessage: 'BLE connection failed or cancelled. Try again.' });
+      }
     }
     return success;
   },
@@ -351,9 +311,8 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       connectionStatus: 'disconnected',
       connectionMedium: 'none',
       statusMessage: 'Bluetooth disconnected.',
-      streamHz: 0,
+      activeView: 'connect',
     });
-    get().showToast('Bluetooth disconnected', 'info');
   },
 
   startSimulation: () => {
@@ -364,9 +323,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       statusMessage: 'SIMULATION ACTIVE — Keys 1-8 trigger gestures',
       isSimulation: true,
       activeView: 'live',
-      streamHz: 50,
     });
-    get().showToast('Simulation Mode Active. Press keys 1-8 to trigger gestures.', 'info');
   },
 
   stopSimulation: () => {
@@ -377,33 +334,19 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       statusMessage: 'Simulation stopped.',
       isSimulation: false,
       isReplaying: false,
-      streamHz: 0,
+      activeView: 'connect',
     });
-    get().showToast('Simulation stopped', 'info');
   },
 
   toggleReplay: () => {
     const isReplaying = simulationService.toggleReplayTrace();
     set({ isReplaying });
-    get().showToast(isReplaying ? 'Sample data trace replay started' : 'Replay stopped', 'info');
   },
 
   processIncomingPacket: (packet: RawSerialPacket) => {
     const state = get();
     const raw = packet.raw;
     const now = performance.now();
-
-    // Measure live stream Hz
-    let currentHz = state.streamHz;
-    if (state.lastPacketTime > 0) {
-      const delta = now - state.lastPacketTime;
-      if (delta > 2 && delta < 500) {
-        const instantHz = Math.round(1000 / delta);
-        currentHz = Math.round((currentHz === 0 ? instantHz : currentHz) * 0.9 + instantHz * 0.1);
-      }
-    } else {
-      currentHz = 50;
-    }
 
     // 1. Moving average smoothing (5 samples)
     const smoothed = filterService.filter(raw);
@@ -436,8 +379,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const instantBinaryString = rawResult.binaryString;
 
     // 4. 400ms Hold Debounce Logic
-    // "A gesture must be held 400 ms before it fires; otherwise show NONE"
-    const HOLD_TIME_MS = CONFIG.GESTURE_HOLD_DURATION_MS; // 400ms
+    const HOLD_TIME_MS = CONFIG.GESTURE_HOLD_DURATION_MS;
     let nextCandidate = state.candidateGesture;
     let nextCandidateStart = state.candidateStartTime;
     let nextActiveGesture: GestureLabel = state.activeGesture;
@@ -446,11 +388,10 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     let triggeredFlash = false;
 
     if (instantLabel !== state.candidateGesture) {
-      // Changed gesture pose -> reset hold timer
+      // Changed gesture pose → reset hold timer
       nextCandidate = instantLabel;
       nextCandidateStart = now;
       nextHoldProgress = 0;
-      // Do not confirm yet
       nextActiveGesture = 'NONE';
     } else {
       // Maintaining candidate pose
@@ -470,7 +411,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
           // Measure REAL latency: from packet.receiveTime to state update
           const measuredLatency = Math.round((performance.now() - packet.receiveTime) * 10) / 10;
 
-          // Record new confirmed entry to history
+          // Record new confirmed entry to history (capped at 500)
           const newEntry: TelemetryPacket = {
             id: `pk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
             timestamp: Date.now(),
@@ -486,12 +427,12 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
             heldMs: Math.round(elapsedMs),
           };
 
-          const updatedHistory = [newEntry, ...state.history.slice(0, 49)];
+          const updatedHistory = [newEntry, ...state.history.slice(0, 499)];
           if (typeof window !== 'undefined') {
             try {
               localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
             } catch {
-              // Ignore
+              // Ignore storage errors
             }
           }
 
@@ -523,8 +464,6 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       holdProgress: nextHoldProgress,
       realLatencyMs: cycleLatency > 0 ? cycleLatency : state.realLatencyMs,
       justConfirmed: triggeredFlash,
-      streamHz: currentHz,
-      lastPacketTime: now,
     });
 
     if (triggeredFlash) {
@@ -535,8 +474,11 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   },
 }));
 
-// Wire up global listeners to store
+// ─────────────────────────────────────────────────────────────
+// Wire up global service listeners → store
+// ─────────────────────────────────────────────────────────────
 if (typeof window !== 'undefined') {
+  // USB Serial packets → processIncomingPacket
   serialService.onPacket((packet) => {
     useSignovaStore.getState().processIncomingPacket(packet);
   });
@@ -545,37 +487,40 @@ if (typeof window !== 'undefined') {
     useSignovaStore.setState({
       connectionStatus: status,
       statusMessage: message || status,
-      streamHz: status === 'connected' ? 50 : 0,
+      // Navigate back to connect view on serial disconnect
+      ...(status === 'disconnected' || status === 'error'
+        ? { activeView: 'connect', connectionMedium: 'none' }
+        : {}),
     });
   });
 
+  // BLE status → store
   bleService.onStatusChange((connected, message) => {
     if (connected) {
       useSignovaStore.setState({
         connectionStatus: 'connected',
         connectionMedium: 'ble',
         statusMessage: message || 'BLE Connected',
-        streamHz: 50,
+        activeView: 'live',
       });
-    } else if (useSignovaStore.getState().connectionMedium === 'ble') {
-      useSignovaStore.setState({
-        connectionStatus: 'disconnected',
-        connectionMedium: 'none',
-        statusMessage: message || 'BLE Disconnected',
-        streamHz: 0,
-      });
+    } else {
+      const currentMedium = useSignovaStore.getState().connectionMedium;
+      if (currentMedium === 'ble') {
+        useSignovaStore.setState({
+          connectionStatus: 'disconnected',
+          connectionMedium: 'none',
+          statusMessage: message || 'BLE Disconnected',
+          activeView: 'connect',
+          // Reset gesture display when hardware disconnects
+          activeGesture: 'NONE',
+          candidateGesture: 'NONE',
+          holdProgress: 0,
+        });
+      }
     }
   });
 
   simulationService.onStateChange((isSimulating, isReplaying) => {
-    useSignovaStore.setState({
-      isSimulation: isSimulating,
-      isReplaying,
-      streamHz: isSimulating ? 50 : 0,
-    });
-  });
-
-  speechService.onSpeakingChange((isSpeaking) => {
-    useSignovaStore.setState({ isSpeaking });
+    useSignovaStore.setState({ isSimulation: isSimulating, isReplaying });
   });
 }
