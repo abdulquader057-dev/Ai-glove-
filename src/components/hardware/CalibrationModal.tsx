@@ -1,9 +1,8 @@
-// Calibration Wizard Modal for SIGNOVA
-// Assistive Device Medical Interface
-// Allows recording and fine-tuning straight and bent ADC thresholds per finger channel,
-// computing midpoint thresholds, and saving to localStorage.
-
 'use client';
+
+// CalibrationModal — guided 3-step calibration wizard
+// Team Syntropy - SIGNOVA
+// Reads from store: isCalibrationOpen, setCalibrationOpen, calibration, setStraightCalibration, setBentCalibration, resetCalibration, rawSensors, smoothedSensors
 
 import React, { useState } from 'react';
 import { useSignovaStore } from '@/store/signovaStore';
@@ -36,8 +35,8 @@ export const CalibrationModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] shadow-modal w-full max-w-lg overflow-hidden animate-scale-pop">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] shadow-2xl w-full max-w-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#F0F2F5] dark:border-[#1F2937]">
           <div className="flex items-center gap-2">
@@ -65,10 +64,10 @@ export const CalibrationModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Live Sensor Monitor Ribbon */}
+        {/* Live Sensor Monitor */}
         <div className="p-4 bg-[#F8F9FA] dark:bg-[#1A2230] border-b border-[#F0F2F5] dark:border-[#1F2937]">
           <div className="text-[11px] font-semibold text-[#475467] dark:text-[#9CA3AF] uppercase mb-2">
-            Live ADC Feed (50Hz)
+            Live ADC Feed (50 Hz)
           </div>
           <div className="grid grid-cols-3 gap-2">
             {SENSOR_NAMES.map((name, i) => (
@@ -89,36 +88,19 @@ export const CalibrationModal: React.FC = () => {
         {/* Wizard Steps */}
         <div className="p-4 space-y-4">
           <div className="flex border-b border-[#E4E7EC] dark:border-[#1F2937] pb-2 text-xs font-medium">
-            <button
-              onClick={() => setActiveStep('straight')}
-              className={`pb-1 px-3 border-b-2 transition-colors ${
-                activeStep === 'straight'
-                  ? 'border-[#0E7490] text-[#0E7490] font-bold'
-                  : 'border-transparent text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              1. Flat / Straight
-            </button>
-            <button
-              onClick={() => setActiveStep('bent')}
-              className={`pb-1 px-3 border-b-2 transition-colors ${
-                activeStep === 'bent'
-                  ? 'border-[#0E7490] text-[#0E7490] font-bold'
-                  : 'border-transparent text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              2. Fully Curled
-            </button>
-            <button
-              onClick={() => setActiveStep('manual')}
-              className={`pb-1 px-3 border-b-2 transition-colors ${
-                activeStep === 'manual'
-                  ? 'border-[#0E7490] text-[#0E7490] font-bold'
-                  : 'border-transparent text-[#667085] hover:text-[#101828]'
-              }`}
-            >
-              3. Fine-Tune
-            </button>
+            {(['straight', 'bent', 'manual'] as const).map((step, idx) => (
+              <button
+                key={step}
+                onClick={() => setActiveStep(step)}
+                className={`pb-1 px-3 border-b-2 transition-colors ${
+                  activeStep === step
+                    ? 'border-[#0E7490] text-[#0E7490] font-bold'
+                    : 'border-transparent text-[#667085] hover:text-[#101828]'
+                }`}
+              >
+                {idx + 1}. {step === 'straight' ? 'Flat / Straight' : step === 'bent' ? 'Fully Curled' : 'Fine-Tune'}
+              </button>
+            ))}
           </div>
 
           {activeStep === 'straight' && (
@@ -128,9 +110,9 @@ export const CalibrationModal: React.FC = () => {
               </p>
               <button
                 onClick={handleCaptureStraight}
-                className="w-full py-2.5 px-4 bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold rounded-lg transition-colors"
               >
-                <span>Capture Straight Baseline</span>
+                Capture Straight Baseline
               </button>
             </div>
           )}
@@ -142,9 +124,9 @@ export const CalibrationModal: React.FC = () => {
               </p>
               <button
                 onClick={handleCaptureBent}
-                className="w-full py-2.5 px-4 bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-semibold rounded-lg transition-colors"
               >
-                <span>Capture Curled Limit</span>
+                Capture Curled Limit
               </button>
             </div>
           )}
@@ -152,7 +134,7 @@ export const CalibrationModal: React.FC = () => {
           {activeStep === 'manual' && (
             <div className="space-y-3">
               <div className="text-xs text-[#475467] dark:text-[#9CA3AF]">
-                Calculated Midpoint Thresholds (saved to localStorage):
+                Calculated midpoint thresholds (saved to localStorage):
               </div>
               <div className="space-y-2 font-mono text-xs">
                 {SENSOR_NAMES.map((name, i) => (
@@ -173,7 +155,7 @@ export const CalibrationModal: React.FC = () => {
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* Footer */}
         <div className="p-4 bg-[#F8F9FA] dark:bg-[#1A2230] border-t border-[#F0F2F5] dark:border-[#1F2937] flex items-center justify-between">
           <button
             onClick={resetCalibration}
@@ -192,3 +174,5 @@ export const CalibrationModal: React.FC = () => {
     </div>
   );
 };
+
+export default CalibrationModal;

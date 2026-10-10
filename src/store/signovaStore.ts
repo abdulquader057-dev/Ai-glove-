@@ -25,7 +25,7 @@ const ENGINE_STORAGE_KEY = 'signova_engine_source_v1';
 const DEFAULT_CALIBRATION: CalibrationState = {
   straight: [250, 260, 240],
   bent: [780, 790, 770],
-  thresholds: [515, 525, 505], // Midpoints
+  thresholds: [515, 525, 505],
 };
 
 function loadSavedCalibration(): CalibrationState {
@@ -38,16 +38,10 @@ function loadSavedCalibration(): CalibrationState {
         const thresholds = parsed.straight.map((s: number, i: number) =>
           Math.round((s + (parsed.bent[i] ?? 780)) / 2)
         );
-        return {
-          straight: parsed.straight,
-          bent: parsed.bent,
-          thresholds,
-        };
+        return { straight: parsed.straight, bent: parsed.bent, thresholds };
       }
     }
-  } catch {
-    // Fallback
-  }
+  } catch { /* Fallback */ }
   return DEFAULT_CALIBRATION;
 }
 
@@ -55,12 +49,8 @@ function loadSavedEngine(): 'threshold' | 'random_forest' {
   if (typeof window === 'undefined') return 'threshold';
   try {
     const saved = localStorage.getItem(ENGINE_STORAGE_KEY);
-    if (saved === 'random_forest' || saved === 'threshold') {
-      return saved;
-    }
-  } catch {
-    // Fallback
-  }
+    if (saved === 'random_forest' || saved === 'threshold') return saved;
+  } catch { /* Fallback */ }
   return 'threshold';
 }
 
@@ -68,12 +58,8 @@ function loadSavedHistory(): TelemetryPacket[] {
   if (typeof window === 'undefined') return [];
   try {
     const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved).slice(0, 500);
-    }
-  } catch {
-    // Fallback
-  }
+    if (saved) return JSON.parse(saved).slice(0, 500);
+  } catch { /* Fallback */ }
   return [];
 }
 
@@ -81,6 +67,10 @@ interface SignovaStore {
   // Navigation (3 Views only)
   activeView: 'connect' | 'live' | 'calibrate';
   setActiveView: (view: 'connect' | 'live' | 'calibrate') => void;
+
+  // Calibration Modal (used by CalibrationModal.tsx)
+  isCalibrationOpen: boolean;
+  setCalibrationOpen: (open: boolean) => void;
 
   // Connection State
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -94,7 +84,7 @@ interface SignovaStore {
   // Sensor Telemetry
   rawSensors: number[];
   smoothedSensors: number[];
-  normalizedSensors: number[]; // 0.0 to 1.0 (0 = straight, 1 = bent)
+  normalizedSensors: number[];
   binaryBits: [number, number, number];
   binaryString: string;
 
@@ -104,7 +94,7 @@ interface SignovaStore {
   activeGesture: GestureLabel;
   activeConfidence: number;
   realLatencyMs: number;
-  holdProgress: number; // 0 to 100%
+  holdProgress: number;
   justConfirmed: boolean;
   classifierSource: 'threshold' | 'random_forest';
 
@@ -139,6 +129,10 @@ interface SignovaStore {
 export const useSignovaStore = create<SignovaStore>((set, get) => ({
   activeView: 'connect',
   setActiveView: (view) => set({ activeView: view }),
+
+  // CalibrationModal open/close state
+  isCalibrationOpen: false,
+  setCalibrationOpen: (open) => set({ isCalibrationOpen: open }),
 
   connectionStatus: 'disconnected',
   connectionMedium: 'none',
@@ -199,9 +193,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   history: loadSavedHistory(),
 
   clearHistory: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(HISTORY_STORAGE_KEY);
-    }
+    if (typeof window !== 'undefined') localStorage.removeItem(HISTORY_STORAGE_KEY);
     set({ history: [] });
   },
 
@@ -220,21 +212,11 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const { history } = get();
     const headers = ['ID', 'Timestamp', 'TimeString', 'Label', 'BinaryPattern', 'ConfidencePct', 'LatencyMs', 'RawIndex', 'RawMiddle', 'RawRing', 'Source', 'HeldMs'];
     const rows = history.map(h => [
-      h.id,
-      h.timestamp,
-      `"${h.timeString}"`,
-      h.label,
-      `"${h.binaryString}"`,
-      h.confidence,
-      h.latencyMs,
-      h.raw[0] ?? 0,
-      h.raw[1] ?? 0,
-      h.raw[2] ?? 0,
-      h.source,
-      h.heldMs,
+      h.id, h.timestamp, `"${h.timeString}"`, h.label, `"${h.binaryString}"`,
+      h.confidence, h.latencyMs, h.raw[0] ?? 0, h.raw[1] ?? 0, h.raw[2] ?? 0, h.source, h.heldMs,
     ]);
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -244,16 +226,10 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
   },
 
   isMuted: speechService.getSettings().muted,
-
-  toggleMute: () => {
-    const next = speechService.toggleMute();
-    set({ isMuted: next });
-  },
+  toggleMute: () => { const next = speechService.toggleMute(); set({ isMuted: next }); },
 
   setClassifierSource: (source) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(ENGINE_STORAGE_KEY, source);
-    }
+    if (typeof window !== 'undefined') localStorage.setItem(ENGINE_STORAGE_KEY, source);
     set({ classifierSource: source });
   },
 
@@ -262,11 +238,9 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const success = await serialService.connect();
     if (success) {
       set({
-        connectionStatus: 'connected',
-        connectionMedium: 'usb_serial',
+        connectionStatus: 'connected', connectionMedium: 'usb_serial',
         statusMessage: `Streaming @ ${CONFIG.SERIAL_BAUD_RATE} baud`,
-        activeView: 'live',
-        isSimulation: false,
+        activeView: 'live', isSimulation: false,
       });
     } else {
       set({ connectionStatus: 'disconnected', statusMessage: 'Serial connection failed or cancelled.' });
@@ -276,12 +250,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
 
   disconnectSerial: async () => {
     await serialService.disconnect();
-    set({
-      connectionStatus: 'disconnected',
-      connectionMedium: 'none',
-      statusMessage: 'Serial port disconnected.',
-      activeView: 'connect',
-    });
+    set({ connectionStatus: 'disconnected', connectionMedium: 'none', statusMessage: 'Serial port disconnected.', activeView: 'connect' });
   },
 
   connectBLE: async () => {
@@ -289,14 +258,11 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const success = await bleService.connect();
     if (success) {
       set({
-        connectionStatus: 'connected',
-        connectionMedium: 'ble',
+        connectionStatus: 'connected', connectionMedium: 'ble',
         statusMessage: 'Streaming via Web Bluetooth (Nordic UART ~50 Hz)',
-        activeView: 'live',
-        isSimulation: false,
+        activeView: 'live', isSimulation: false,
       });
     } else {
-      // Don't overwrite if the BLE service already set a richer error message via onStatusChange
       const current = useSignovaStore.getState();
       if (current.connectionStatus !== 'error') {
         set({ connectionStatus: 'disconnected', statusMessage: 'BLE connection failed or cancelled. Try again.' });
@@ -307,34 +273,24 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
 
   disconnectBLE: async () => {
     await bleService.disconnect();
-    set({
-      connectionStatus: 'disconnected',
-      connectionMedium: 'none',
-      statusMessage: 'Bluetooth disconnected.',
-      activeView: 'connect',
-    });
+    set({ connectionStatus: 'disconnected', connectionMedium: 'none', statusMessage: 'Bluetooth disconnected.', activeView: 'connect' });
   },
 
   startSimulation: () => {
     simulationService.startSimulation();
     set({
-      connectionStatus: 'connected',
-      connectionMedium: 'simulation',
+      connectionStatus: 'connected', connectionMedium: 'simulation',
       statusMessage: 'SIMULATION ACTIVE — Keys 1-8 trigger gestures',
-      isSimulation: true,
-      activeView: 'live',
+      isSimulation: true, activeView: 'live',
     });
   },
 
   stopSimulation: () => {
     simulationService.stopSimulation();
     set({
-      connectionStatus: 'disconnected',
-      connectionMedium: 'none',
-      statusMessage: 'Simulation stopped.',
-      isSimulation: false,
-      isReplaying: false,
-      activeView: 'connect',
+      connectionStatus: 'disconnected', connectionMedium: 'none',
+      statusMessage: 'Simulation stopped.', isSimulation: false,
+      isReplaying: false, activeView: 'connect',
     });
   },
 
@@ -351,7 +307,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     // 1. Moving average smoothing (5 samples)
     const smoothed = filterService.filter(raw);
 
-    // 2. Normalized values [0.0 to 1.0] using calibration
+    // 2. Normalize [0.0–1.0] using calibration
     const { calibration, classifierSource } = state;
     const normalized: number[] = [];
     for (let i = 0; i < SENSOR_COUNT; i++) {
@@ -365,7 +321,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       normalized.push(Math.max(0.0, Math.min(1.0, norm)));
     }
 
-    // 3. Instantaneous classification
+    // 3. Classify
     const rawResult = classify(smoothed, {
       thresholds: calibration.thresholds,
       straight: calibration.straight,
@@ -378,40 +334,31 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const instantBits = rawResult.bits as [number, number, number];
     const instantBinaryString = rawResult.binaryString;
 
-    // 4. 400ms Hold Debounce Logic
+    // 4. 400ms Hold Debounce
     const HOLD_TIME_MS = CONFIG.GESTURE_HOLD_DURATION_MS;
     let nextCandidate = state.candidateGesture;
     let nextCandidateStart = state.candidateStartTime;
     let nextActiveGesture: GestureLabel = state.activeGesture;
     let nextHoldProgress = 0;
-    const nextConfidence = instantConfidence;
     let triggeredFlash = false;
 
     if (instantLabel !== state.candidateGesture) {
-      // Changed gesture pose → reset hold timer
       nextCandidate = instantLabel;
       nextCandidateStart = now;
       nextHoldProgress = 0;
       nextActiveGesture = 'NONE';
     } else {
-      // Maintaining candidate pose
       const elapsedMs = now - nextCandidateStart;
       if (elapsedMs >= HOLD_TIME_MS) {
-        // Hold threshold achieved!
         nextHoldProgress = 100;
         if (state.activeGesture !== instantLabel) {
           nextActiveGesture = instantLabel;
           triggeredFlash = true;
 
-          // Vocalize label change with 1.5s cooldown guard
-          if (nextActiveGesture !== 'NONE') {
-            speechService.speakGesture(nextActiveGesture);
-          }
+          if (nextActiveGesture !== 'NONE') speechService.speakGesture(nextActiveGesture);
 
-          // Measure REAL latency: from packet.receiveTime to state update
           const measuredLatency = Math.round((performance.now() - packet.receiveTime) * 10) / 10;
 
-          // Record new confirmed entry to history (capped at 500)
           const newEntry: TelemetryPacket = {
             id: `pk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
             timestamp: Date.now(),
@@ -421,7 +368,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
             binaryBits: instantBits,
             binaryString: instantBinaryString,
             label: nextActiveGesture,
-            confidence: nextConfidence,
+            confidence: instantConfidence,
             latencyMs: measuredLatency,
             source: classifierSource,
             heldMs: Math.round(elapsedMs),
@@ -429,92 +376,60 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
 
           const updatedHistory = [newEntry, ...state.history.slice(0, 499)];
           if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
-            } catch {
-              // Ignore storage errors
-            }
+            try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory)); } catch { /* ignore */ }
           }
-
-          set({
-            history: updatedHistory,
-            realLatencyMs: measuredLatency,
-          });
+          set({ history: updatedHistory, realLatencyMs: measuredLatency });
         }
       } else {
-        // Still warming up hold timer
         nextHoldProgress = Math.min(99, Math.round((elapsedMs / HOLD_TIME_MS) * 100));
         nextActiveGesture = 'NONE';
       }
     }
 
-    // Measure live latency for this cycle
     const cycleLatency = Math.round((performance.now() - packet.receiveTime) * 10) / 10;
 
     set({
-      rawSensors: raw,
-      smoothedSensors: smoothed,
-      normalizedSensors: normalized,
-      binaryBits: instantBits,
-      binaryString: instantBinaryString,
-      candidateGesture: nextCandidate,
-      candidateStartTime: nextCandidateStart,
-      activeGesture: nextActiveGesture,
-      activeConfidence: nextConfidence,
+      rawSensors: raw, smoothedSensors: smoothed, normalizedSensors: normalized,
+      binaryBits: instantBits, binaryString: instantBinaryString,
+      candidateGesture: nextCandidate, candidateStartTime: nextCandidateStart,
+      activeGesture: nextActiveGesture, activeConfidence: instantConfidence,
       holdProgress: nextHoldProgress,
       realLatencyMs: cycleLatency > 0 ? cycleLatency : state.realLatencyMs,
       justConfirmed: triggeredFlash,
     });
 
-    if (triggeredFlash) {
-      setTimeout(() => {
-        set({ justConfirmed: false });
-      }, 300);
-    }
+    if (triggeredFlash) setTimeout(() => set({ justConfirmed: false }), 300);
   },
 }));
 
 // ─────────────────────────────────────────────────────────────
-// Wire up global service listeners → store
+// Wire global service listeners → store
 // ─────────────────────────────────────────────────────────────
 if (typeof window !== 'undefined') {
-  // USB Serial packets → processIncomingPacket
-  serialService.onPacket((packet) => {
-    useSignovaStore.getState().processIncomingPacket(packet);
-  });
+  serialService.onPacket((packet) => useSignovaStore.getState().processIncomingPacket(packet));
 
   serialService.onStatusChange((status, message) => {
     useSignovaStore.setState({
       connectionStatus: status,
       statusMessage: message || status,
-      // Navigate back to connect view on serial disconnect
       ...(status === 'disconnected' || status === 'error'
-        ? { activeView: 'connect', connectionMedium: 'none' }
-        : {}),
+        ? { activeView: 'connect', connectionMedium: 'none' } : {}),
     });
   });
 
-  // BLE status → store
   bleService.onStatusChange((connected, message) => {
     if (connected) {
       useSignovaStore.setState({
-        connectionStatus: 'connected',
-        connectionMedium: 'ble',
-        statusMessage: message || 'BLE Connected',
-        activeView: 'live',
+        connectionStatus: 'connected', connectionMedium: 'ble',
+        statusMessage: message || 'BLE Connected', activeView: 'live',
       });
     } else {
       const currentMedium = useSignovaStore.getState().connectionMedium;
       if (currentMedium === 'ble') {
         useSignovaStore.setState({
-          connectionStatus: 'disconnected',
-          connectionMedium: 'none',
-          statusMessage: message || 'BLE Disconnected',
-          activeView: 'connect',
-          // Reset gesture display when hardware disconnects
-          activeGesture: 'NONE',
-          candidateGesture: 'NONE',
-          holdProgress: 0,
+          connectionStatus: 'disconnected', connectionMedium: 'none',
+          statusMessage: message || 'BLE Disconnected', activeView: 'connect',
+          activeGesture: 'NONE', candidateGesture: 'NONE', holdProgress: 0,
         });
       }
     }
