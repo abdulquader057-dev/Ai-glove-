@@ -24,6 +24,7 @@ class SpeechService {
   private pitch: number = 1.0;
   private muted: boolean = false;
   private listeners: Set<(settings: SpeechSettings) => void> = new Set();
+  private speakingListeners: Set<(isSpeaking: boolean) => void> = new Set();
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -37,34 +38,45 @@ class SpeechService {
     }
   }
 
+  public onSpeakingChange(fn: (isSpeaking: boolean) => void): () => void {
+    this.speakingListeners.add(fn);
+    return () => this.speakingListeners.delete(fn);
+  }
+
+  private notifySpeaking(isSpeaking: boolean): void {
+    this.speakingListeners.forEach(fn => fn(isSpeaking));
+  }
+
   private loadSettings(): void {
-    if (typeof window === 'undefined') return;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: Partial<SpeechSettings> = JSON.parse(saved);
-        if (parsed.rate !== undefined) this.rate = parsed.rate;
-        if (parsed.pitch !== undefined) this.pitch = parsed.pitch;
-        if (parsed.muted !== undefined) this.muted = parsed.muted;
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed: Partial<SpeechSettings> = JSON.parse(saved);
+          if (parsed.rate !== undefined) this.rate = parsed.rate;
+          if (parsed.pitch !== undefined) this.pitch = parsed.pitch;
+          if (parsed.muted !== undefined) this.muted = parsed.muted;
+        }
+      } catch {
+        // Use defaults if parse fails
       }
-    } catch {
-      // Use defaults if parse fails
     }
   }
 
   private saveSettings(): void {
-    if (typeof window === 'undefined') return;
-    try {
-      const data: SpeechSettings = {
-        voiceURI: this.selectedVoice?.voiceURI || '',
-        rate: this.rate,
-        pitch: this.pitch,
-        muted: this.muted,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      this.notifyListeners();
-    } catch {
-      // Storage unavailable
+    if (typeof window !== 'undefined') {
+      try {
+        const data: SpeechSettings = {
+          voiceURI: this.selectedVoice?.voiceURI || '',
+          rate: this.rate,
+          pitch: this.pitch,
+          muted: this.muted,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        this.notifyListeners();
+      } catch {
+        // Storage unavailable
+      }
     }
   }
 
@@ -73,20 +85,20 @@ class SpeechService {
     this.voices = this.synth.getVoices();
 
     // Check if previously saved voice exists
-    let savedURI = '';
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) savedURI = JSON.parse(saved).voiceURI || '';
+      if (saved) {
+        const parsed: Partial<SpeechSettings> = JSON.parse(saved);
+        if (parsed.voiceURI) {
+          const match = this.voices.find(v => v.voiceURI === parsed.voiceURI);
+          if (match) {
+            this.selectedVoice = match;
+            return;
+          }
+        }
+      }
     } catch {
       // Ignore
-    }
-
-    if (savedURI) {
-      const match = this.voices.find(v => v.voiceURI === savedURI);
-      if (match) {
-        this.selectedVoice = match;
-        return;
-      }
     }
 
     // Default to a clear English voice if available
@@ -140,6 +152,7 @@ class SpeechService {
     this.muted = muted;
     if (muted && this.synth) {
       this.synth.cancel();
+      this.notifySpeaking(false);
     }
     this.saveSettings();
   }
@@ -186,17 +199,6 @@ class SpeechService {
   public testVoice(sampleText: string = 'Signova Voice Ready'): void {
     if (!this.synth) return;
     this.speakText(sampleText);
-  }
-
-  private speakingListeners: Set<(isSpeaking: boolean) => void> = new Set();
-
-  public onSpeakingChange(fn: (isSpeaking: boolean) => void): () => void {
-    this.speakingListeners.add(fn);
-    return () => this.speakingListeners.delete(fn);
-  }
-
-  private notifySpeaking(isSpeaking: boolean): void {
-    this.speakingListeners.forEach(fn => fn(isSpeaking));
   }
 
   private speakText(text: string): void {

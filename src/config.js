@@ -22,6 +22,15 @@ export const CONFIG = {
   ],
 
   // 3-bit binary pattern gesture dictionary (bent=1, straight=0, order: index, middle, ring)
+  // Matching exact specifications:
+  // All 3 Straight: {0, 0, 0} -> HELLO
+  // All 3 Bent: {1, 1, 1} -> YES
+  // Index Straight, Middle & Ring Bent: {0, 1, 1} -> ONE
+  // Index & Middle Straight, Ring Bent: {0, 0, 1} -> VICTORY
+  // Middle & Ring Straight, Index Bent: {1, 0, 0} -> OK
+  // Ring Straight, Index & Middle Bent: {1, 1, 0} -> THREE
+  // Middle Straight, Index & Ring Bent: {1, 0, 1} -> NO
+  // Index & Ring Straight, Middle Bent: {0, 1, 0} -> ROCK
   GESTURE_MAP: {
     '000': 'HELLO',
     '111': 'YES',
@@ -34,14 +43,14 @@ export const CONFIG = {
   },
 
   GESTURE_DESCRIPTIONS: {
-    'HELLO':   'All 3 fingers straight',
-    'YES':     'All 3 fingers bent',
-    'ONE':     'Index straight, middle & ring bent',
-    'VICTORY': 'Index & middle straight, ring bent',
-    'OK':      'Middle & ring straight, index bent',
-    'THREE':   'Ring straight, index & middle bent',
-    'NO':      'Middle straight, index & ring bent',
-    'ROCK':    'Index & ring straight, middle bent',
+    'HELLO': 'All 3 Straight',
+    'YES': 'All 3 Bent',
+    'ONE': 'Index Straight, Middle & Ring Bent',
+    'VICTORY': 'Index & Middle Straight, Ring Bent',
+    'OK': 'Middle & Ring Straight, Index Bent',
+    'THREE': 'Ring Straight, Index & Middle Bent',
+    'NO': 'Middle Straight, Index & Ring Bent',
+    'ROCK': 'Index & Ring Straight, Middle Bent',
   },
 
   // BLE UUIDs (Nordic UART Service) — MUST be lowercase for Web Bluetooth API

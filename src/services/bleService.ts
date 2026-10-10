@@ -12,8 +12,8 @@ export const NORDIC_UART_SERVICE_UUID    = '6e400001-b5a3-f393-e0a9-e50e24dcca9e
 export const UART_TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // Device → Browser (Notify)
 export const UART_RX_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // Browser → Device (Write)
 
-// All BLE name variants the firmware might use (case-sensitive)
-const BLE_NAME_VARIANTS = ['SIGNOVA', 'Signova', 'signova'];
+// All BLE name variants the firmware might use (case-insensitive checking)
+const BLE_NAME_VARIANTS = ['SIGNOVA', 'Signova', 'signova', 'Seeed', 'XIAO', 'Syntropy'];
 
 type BLEServer     = any;
 type BLECharacteristic = any;
@@ -48,13 +48,6 @@ class BLEService {
 
   /**
    * Show the BLE device picker.
-   *
-   * Filter strategy (OR logic — device matches if it satisfies ANY filter):
-   *   1. Device name is exactly "SIGNOVA" / "Signova" / "signova"
-   *   2. Device advertises the Nordic UART Service UUID
-   *
-   * Either condition is enough. The optional service list tells Chrome to
-   * give us access to the NUS service regardless of which filter matched.
    */
   public async connect(): Promise<boolean> {
     if (!this.isSupported()) {
@@ -66,10 +59,7 @@ class BLEService {
       this.notifyStatus(false, 'Scanning for SIGNOVA BLE glove...');
       const navBluetooth = (navigator as any).bluetooth;
 
-      // Build OR-combined filter list:
-      //   – one filter per name variant
-      //   – one filter matching any NUS device (catches firmware that uses a different name)
-      const nameFilters = BLE_NAME_VARIANTS.map((name) => ({ name }));
+      const nameFilters = BLE_NAME_VARIANTS.map((name) => ({ namePrefix: name }));
       const serviceFilter = { services: [NORDIC_UART_SERVICE_UUID] };
 
       this.device = await navBluetooth.requestDevice({
@@ -79,7 +69,6 @@ class BLEService {
 
       if (!this.device) throw new Error('Device selection cancelled');
 
-      // Listen for hardware-side disconnection
       this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
 
       this.notifyStatus(false, `Connecting to ${this.device.name || 'SIGNOVA'}...`);
@@ -87,7 +76,6 @@ class BLEService {
 
       if (!this.gattServer) throw new Error('Failed to connect to GATT server');
 
-      // Get Nordic UART Service
       let service: any;
       try {
         service = await this.gattServer.getPrimaryService(NORDIC_UART_SERVICE_UUID);
@@ -99,7 +87,6 @@ class BLEService {
         );
       }
 
-      // Subscribe to TX notifications (device → browser)
       this.txCharacteristic = await service.getCharacteristic(UART_TX_CHARACTERISTIC_UUID);
       await this.txCharacteristic.startNotifications();
       this.txCharacteristic.addEventListener(
@@ -111,7 +98,6 @@ class BLEService {
       return true;
 
     } catch (err: any) {
-      // User cancelled the picker — don't treat it as an error
       if (err.name === 'NotFoundError' || err.message?.toLowerCase().includes('cancel')) {
         this.notifyStatus(false, 'BLE picker closed. Click "Connect BLE Wireless" to try again.');
       } else {
@@ -123,10 +109,8 @@ class BLEService {
   }
 
   /**
-   * Handle incoming BLE notification chunk.
-   * Supports:
-   *   - Binary: exactly 6 bytes → 3 × uint16 little-endian → "idx,mid,rng"
-   *   - ASCII:  UTF-8 text, potentially chunked, delimited by '\n'
+   * Handle incoming BLE notification chunk with zero-latency line extraction.
+   * Handles both newline-terminated and standalone comma-delimited packets.
    */
   private handleNotification(event: Event): void {
     const target = event.target as any;
@@ -144,10 +128,11 @@ class BLEService {
       return;
     }
 
-    // ASCII text — buffer until we have full lines
+    // ASCII text chunk
     const chunk = this.textDecoder.decode(dataView, { stream: true });
     this.textBuffer += chunk;
 
+    // Check for newlines
     let nl: number;
     while ((nl = this.textBuffer.indexOf('\n')) >= 0) {
       const line = this.textBuffer.slice(0, nl).trim();
@@ -155,6 +140,21 @@ class BLEService {
       if (line.length > 0) {
         serialService.parseLine(line, receiveTime);
       }
+    }
+
+    // If buffer contains a complete 3-value reading without newline (e.g. "412,820,310")
+    if (this.textBuffer.includes(',')) {
+      const parts = this.textBuffer.split(',').map(p => p.trim());
+      if (parts.length === 3 && parts.every(p => p.length > 0 && !isNaN(Number(p)))) {
+        const line = this.textBuffer.trim();
+        this.textBuffer = '';
+        serialService.parseLine(line, receiveTime);
+      }
+    }
+
+    // Prevent buffer memory bloat if malformed noise arrives
+    if (this.textBuffer.length > 256) {
+      this.textBuffer = '';
     }
   }
 

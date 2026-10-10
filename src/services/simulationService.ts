@@ -11,6 +11,15 @@ const STRAIGHT_ADC = 250;
 const BENT_ADC = 780;
 
 // 8 gesture profiles (index, middle, ring)
+// Exactly matching user dictionary:
+// 1. All 3 Straight: {0, 0, 0} -> HELLO
+// 2. All 3 Bent: {1, 1, 1} -> YES
+// 3. Index Straight, Middle & Ring Bent: {0, 1, 1} -> ONE
+// 4. Index & Middle Straight, Ring Bent: {0, 0, 1} -> VICTORY
+// 5. Middle & Ring Straight, Index Bent: {1, 0, 0} -> OK
+// 6. Ring Straight, Index & Middle Bent: {1, 1, 0} -> THREE
+// 7. Middle Straight, Index & Ring Bent: {1, 0, 1} -> NO
+// 8. Index & Ring Straight, Middle Bent: {0, 1, 0} -> ROCK
 export const GESTURE_SIMULATION_PRESETS: Record<string, { key: string; name: string; pattern: [number, number, number]; flex: [number, number, number] }> = {
   '1': { key: '1', name: 'HELLO', pattern: [0, 0, 0], flex: [STRAIGHT_ADC, STRAIGHT_ADC, STRAIGHT_ADC] },
   '2': { key: '2', name: 'YES', pattern: [1, 1, 1], flex: [BENT_ADC, BENT_ADC, BENT_ADC] },
