@@ -367,8 +367,16 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const { calibration, classifierSource } = state;
     const normalized: number[] = [];
     for (let i = 0; i < SENSOR_COUNT; i++) {
-      const sVal = calibration.straight[i] ?? 250;
-      const bVal = calibration.bent[i] ?? 780;
+      let sVal = calibration.straight[i] ?? 250;
+      let bVal = calibration.bent[i] ?? 780;
+      
+      // Auto-scale calibration if sensor returns 12-bit / 14-bit ADC values (> 1023)
+      if (smoothed[i] > 1023 && Math.max(sVal, bVal) < 1000) {
+        const scale = smoothed[i] > 4095 ? 16384 / 1024 : 4096 / 1024;
+        sVal *= scale;
+        bVal *= scale;
+      }
+
       const minVal = Math.min(sVal, bVal);
       const maxVal = Math.max(sVal, bVal);
       const range = maxVal - minVal || 1;

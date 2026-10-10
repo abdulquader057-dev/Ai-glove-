@@ -1,5 +1,5 @@
 // SIGNOVA Gesture Classifier
-// Exposes classify(values, options) => { label, confidence, source, bits }
+// Exposes classify(values, options) => { label, confidence, source, bits, binaryString }
 // Team Syntropy
 
 import { CONFIG } from '../config.js';
@@ -35,29 +35,39 @@ export function classify(values, options = {}) {
   }
 
   // 1. Calculate binary pattern: 1 = bent, 0 = straight
-  // Note: Most flex sensors increase resistance (higher ADC) when bent.
-  // Invert check handles both directions if bent > straight or straight > bent.
+  // Supports dynamic adaptive calibration:
+  // If the sensor has not been calibrated and raw values exceed 1023 (e.g. 10-bit or 14-bit ADC on nRF52840),
+  // compare against dynamic midpoint or threshold safely.
   const bits = [0, 0, 0];
   const fingerConfidences = [0, 0, 0];
 
   for (let i = 0; i < 3; i++) {
     const val = values[i];
-    const th = thresholds[i];
-    const sVal = straightVals[i];
-    const bVal = bentVals[i];
+    let th = thresholds[i];
+    let sVal = straightVals[i];
+    let bVal = bentVals[i];
+
+    // Auto-scale default calibration if incoming ADC is using 12-bit/14-bit scale (e.g. > 1023)
+    // while calibration was left at default ~500:
+    if (val > 1023 && th < 1000 && Math.max(sVal, bVal) < 1000) {
+      // Scale thresholds up proportionally to 14-bit scale
+      const scale = val > 4095 ? 16384 / 1024 : 4096 / 1024;
+      th = th * scale;
+      sVal = sVal * scale;
+      bVal = bVal * scale;
+    }
 
     const isBentHigher = bVal >= sVal;
 
     if (isBentHigher) {
       bits[i] = val >= th ? 1 : 0;
-      // Distance from threshold to target
       const target = bits[i] === 1 ? bVal : sVal;
       const span = Math.abs(target - th) || 1;
       const dist = Math.abs(val - th);
       const ratio = Math.min(1.0, dist / span);
-      fingerConfidences[i] = 50 + ratio * 50; // Between 50% (at boundary) and 100% (at target)
+      fingerConfidences[i] = 50 + ratio * 50;
     } else {
-      // Reversed polarity
+      // Reversed polarity (resistance drops when flexed)
       bits[i] = val <= th ? 1 : 0;
       const target = bits[i] === 1 ? bVal : sVal;
       const span = Math.abs(th - target) || 1;
@@ -70,7 +80,6 @@ export function classify(values, options = {}) {
   const binaryString = `${bits[0]}${bits[1]}${bits[2]}`;
 
   if (source === 'random_forest') {
-    // Normalize values into 0.0 - 1.0 based on calibration
     const normalized = [0, 0, 0];
     for (let i = 0; i < 3; i++) {
       const min = Math.min(straightVals[i], bentVals[i]);
@@ -105,7 +114,7 @@ export function classify(values, options = {}) {
     };
   }
 
-  // Default: Threshold binary pattern engine
+  // Exact Gesture dictionary mapping from config
   const matchedLabel = CONFIG.GESTURE_MAP[binaryString] || 'NONE';
   const avgConf = (fingerConfidences[0] + fingerConfidences[1] + fingerConfidences[2]) / 3;
   const confidence = Math.round(avgConf * 10) / 10;

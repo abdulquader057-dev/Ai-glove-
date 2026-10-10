@@ -1,6 +1,6 @@
 // Speech Synthesis Engine for SIGNOVA
 // Team Syntropy
-// Manages text-to-speech with 1.5s cooldown on label changes, voice selector, rate control, and localStorage persistence.
+// Manages text-to-speech with cooldown on label changes, voice selector, rate control, and localStorage persistence.
 
 import { CONFIG } from '../config.js';
 
@@ -25,6 +25,7 @@ class SpeechService {
   private muted: boolean = false;
   private listeners: Set<(settings: SpeechSettings) => void> = new Set();
   private speakingListeners: Set<(isSpeaking: boolean) => void> = new Set();
+  private isUnlocked: boolean = false;
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -35,6 +36,29 @@ class SpeechService {
       if (this.synth.onvoiceschanged !== undefined) {
         this.synth.onvoiceschanged = () => this.loadVoices();
       }
+
+      // Auto-unlock speech synthesis on first user interaction (browser audio policy)
+      const unlockAudio = () => {
+        if (!this.synth) return;
+        try {
+          if (!this.isUnlocked) {
+            // Speak a 0-volume silent tick to lift autoplay restrictions
+            const silent = new SpeechSynthesisUtterance('');
+            silent.volume = 0;
+            this.synth.speak(silent);
+            this.isUnlocked = true;
+          }
+        } catch {
+          // Ignore
+        }
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
+
+      window.addEventListener('click', unlockAudio, { once: true });
+      window.addEventListener('keydown', unlockAudio, { once: true });
+      window.addEventListener('touchstart', unlockAudio, { once: true });
     }
   }
 
@@ -173,7 +197,7 @@ class SpeechService {
   }
 
   /**
-   * Speak label only on label change, with 1.5s cooldown
+   * Speak label only on label change, with cooldown
    * @param label - Gesture word to speak
    * @returns boolean - Whether the phrase was vocalized
    */
@@ -194,7 +218,7 @@ class SpeechService {
   }
 
   /**
-   * Force speak text (e.g. for Test Voice button)
+   * Force speak text (e.g. for Test Voice button or gesture click)
    */
   public testVoice(sampleText: string = 'Signova Voice Ready'): void {
     if (!this.synth) return;
@@ -205,6 +229,11 @@ class SpeechService {
     if (!this.synth) return;
 
     try {
+      // Resume in case browser paused audio queue
+      if (this.synth.paused) {
+        this.synth.resume();
+      }
+
       this.synth.cancel(); // Stop pending speech
       const utterance = new SpeechSynthesisUtterance(text);
       if (this.selectedVoice) {
@@ -212,15 +241,19 @@ class SpeechService {
       }
       utterance.rate = this.rate;
       utterance.pitch = this.pitch;
+      utterance.volume = 1.0;
       utterance.lang = this.selectedVoice?.lang || 'en-US';
 
       utterance.onstart = () => this.notifySpeaking(true);
       utterance.onend = () => this.notifySpeaking(false);
-      utterance.onerror = () => this.notifySpeaking(false);
+      utterance.onerror = (e) => {
+        console.warn('speechSynthesis error:', e);
+        this.notifySpeaking(false);
+      };
 
       this.synth.speak(utterance);
     } catch (err) {
-      console.warn('speechSynthesis error:', err);
+      console.warn('speechSynthesis exception:', err);
       this.notifySpeaking(false);
     }
   }
