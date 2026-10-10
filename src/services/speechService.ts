@@ -196,18 +196,30 @@ class SpeechService {
     this.listeners.forEach(fn => fn(s));
   }
 
+  public resetLastSpoken(): void {
+    this.lastSpokenLabel = '';
+  }
+
   /**
-   * Speak label only on label change, with cooldown
+   * Speak label only on label change, or repeated gesture after cooldown
    * @param label - Gesture word to speak
    * @returns boolean - Whether the phrase was vocalized
    */
   public speakGesture(label: string): boolean {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+    this.synth = window.speechSynthesis;
     if (!this.synth || this.muted) return false;
-    if (!label || label === 'NONE' || label === this.lastSpokenLabel) return false;
+    if (!label || label === 'NONE') return false;
 
     const now = Date.now();
+    // Allow re-speaking same gesture if >= 2.5s has elapsed since last vocalization
+    if (label === this.lastSpokenLabel && now - this.lastSpokenTimestamp < 2500) {
+      return false;
+    }
+
+    // Minimum throttle between different words
     if (now - this.lastSpokenTimestamp < this.cooldownMs) {
-      return false; // Still within cooldown window
+      return false;
     }
 
     this.lastSpokenLabel = label;
@@ -221,37 +233,54 @@ class SpeechService {
    * Force speak text (e.g. for Test Voice button or gesture click)
    */
   public testVoice(sampleText: string = 'Signova Voice Ready'): void {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    this.synth = window.speechSynthesis;
     if (!this.synth) return;
     this.speakText(sampleText);
   }
 
   private speakText(text: string): void {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    this.synth = window.speechSynthesis;
     if (!this.synth) return;
 
     try {
-      // Resume in case browser paused audio queue
       if (this.synth.paused) {
         this.synth.resume();
       }
-
       this.synth.cancel(); // Stop pending speech
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (this.selectedVoice) {
-        utterance.voice = this.selectedVoice;
-      }
-      utterance.rate = this.rate;
-      utterance.pitch = this.pitch;
-      utterance.volume = 1.0;
-      utterance.lang = this.selectedVoice?.lang || 'en-US';
 
-      utterance.onstart = () => this.notifySpeaking(true);
-      utterance.onend = () => this.notifySpeaking(false);
-      utterance.onerror = (e) => {
-        console.warn('speechSynthesis error:', e);
-        this.notifySpeaking(false);
-      };
+      // Wait 15ms after cancel before speak to work around Chrome/Edge audio queue drop bug
+      setTimeout(() => {
+        if (!this.synth) return;
+        try {
+          if (this.voices.length === 0) {
+            this.loadVoices();
+          }
 
-      this.synth.speak(utterance);
+          const utterance = new SpeechSynthesisUtterance(text);
+          if (this.selectedVoice) {
+            utterance.voice = this.selectedVoice;
+          }
+          utterance.rate = this.rate;
+          utterance.pitch = this.pitch;
+          utterance.volume = 1.0;
+          utterance.lang = this.selectedVoice?.lang || 'en-US';
+
+          utterance.onstart = () => this.notifySpeaking(true);
+          utterance.onend = () => this.notifySpeaking(false);
+          utterance.onerror = (e) => {
+            console.warn('speechSynthesis error:', e);
+            this.notifySpeaking(false);
+          };
+
+          this.synth.resume();
+          this.synth.speak(utterance);
+        } catch (innerErr) {
+          console.warn('speechSynthesis inner error:', innerErr);
+          this.notifySpeaking(false);
+        }
+      }, 15);
     } catch (err) {
       console.warn('speechSynthesis exception:', err);
       this.notifySpeaking(false);

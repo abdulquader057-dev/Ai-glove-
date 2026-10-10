@@ -16,6 +16,7 @@ export const SensorChannels: React.FC = () => {
     binaryBits,
     calibration,
     connectionStatus,
+    autoCalibrateRestPose,
     history,
     clearHistory,
     exportHistoryCSV,
@@ -106,13 +107,27 @@ export const SensorChannels: React.FC = () => {
               Flex Channels
             </h2>
           </div>
-          <span className="text-[10px] font-mono text-[#667085] dark:text-[#9CA3AF]">
-            ADC 0–1023
+          <span className="text-[10px] font-mono text-[#0E7490] dark:text-[#38BDF8] font-semibold">
+            Auto-Adaptive
           </span>
         </div>
 
+        {/* Quick Zero Flat Hand Action */}
+        <div className="mt-2.5 pb-2.5 border-b border-[#F0F2F5] dark:border-[#1F2937] flex items-center justify-between">
+          <span className="text-[10px] text-[#667085] dark:text-[#9CA3AF]">
+            Current Hand Pose:
+          </span>
+          <button
+            onClick={autoCalibrateRestPose}
+            title="Set current hand posture as Straight (0) baseline"
+            className="px-2.5 py-1 rounded bg-[#E0F2FE] hover:bg-[#BAE6FD] dark:bg-[#0E7490]/30 dark:hover:bg-[#0E7490]/50 text-[#0E7490] dark:text-[#38BDF8] text-[10px] font-bold flex items-center gap-1 transition-all hover:scale-105"
+          >
+            <span>⚡ Zero Flat Hand</span>
+          </button>
+        </div>
+
         {/* 3 Finger Channel Meters */}
-        <div className="mt-3 space-y-3">
+        <div className="mt-2.5 space-y-2.5">
           {SENSOR_NAMES.map((name, idx) => {
             const raw = rawSensors[idx] ?? 0;
             const norm = normalizedSensors[idx] ?? 0;

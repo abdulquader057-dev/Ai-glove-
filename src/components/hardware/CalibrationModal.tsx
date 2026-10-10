@@ -16,6 +16,7 @@ export const CalibrationModal: React.FC = () => {
     setStraightCalibration,
     setBentCalibration,
     resetCalibration,
+    autoCalibrateRestPose,
     rawSensors,
     smoothedSensors,
   } = useSignovaStore();
@@ -108,12 +109,23 @@ export const CalibrationModal: React.FC = () => {
               <p className="text-xs text-[#475467] dark:text-[#9CA3AF]">
                 Hold your hand completely flat with all fingers straight (unflexed).
               </p>
-              <button
-                onClick={handleCaptureStraight}
-                className="w-full py-2.5 px-4 bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold rounded-lg transition-colors"
-              >
-                Capture Straight Baseline
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCaptureStraight}
+                  className="flex-1 py-2.5 px-3 bg-[#0E7490] hover:bg-[#155E75] text-white text-xs font-semibold rounded-lg transition-colors"
+                >
+                  Capture Straight (Step 1 of 2)
+                </button>
+                <button
+                  onClick={() => {
+                    autoCalibrateRestPose();
+                    setActiveStep('manual');
+                  }}
+                  className="py-2.5 px-3 bg-[#12B76A] hover:bg-[#0E9F5D] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                >
+                  <span>⚡ 1-Click Auto Zero</span>
+                </button>
+              </div>
             </div>
           )}
 

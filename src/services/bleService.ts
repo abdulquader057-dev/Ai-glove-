@@ -129,8 +129,19 @@ class BLEService {
     }
 
     // ASCII text chunk
-    const chunk = this.textDecoder.decode(dataView, { stream: true });
-    this.textBuffer += chunk;
+    const rawChunk = this.textDecoder.decode(dataView, { stream: true });
+    const directTrim = rawChunk.trim();
+
+    // Check if the individual BLE packet is a standalone gesture word or bit pattern directly:
+    const KNOWN = ['HELLO', 'YES', 'ONE', 'VICTORY', 'OK', 'THREE', 'NO', 'ROCK'];
+    const directUpper = directTrim.toUpperCase();
+    if (KNOWN.includes(directUpper) || /^[01]{3}$/.test(directTrim) || /^\{?[01],\s*[01],\s*[01]\}?$/.test(directTrim)) {
+      this.textBuffer = '';
+      serialService.parseLine(directTrim, receiveTime);
+      return;
+    }
+
+    this.textBuffer += rawChunk;
 
     // Check for newlines
     let nl: number;
@@ -150,6 +161,14 @@ class BLEService {
         this.textBuffer = '';
         serialService.parseLine(line, receiveTime);
       }
+    }
+
+    // If buffer ends with a standalone known gesture
+    const currentTrim = this.textBuffer.trim().toUpperCase();
+    if (KNOWN.includes(currentTrim)) {
+      this.textBuffer = '';
+      serialService.parseLine(currentTrim, receiveTime);
+      return;
     }
 
     // Prevent buffer memory bloat if malformed noise arrives

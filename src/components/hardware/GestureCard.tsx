@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { useSignovaStore } from '@/store/signovaStore';
+import { speechService } from '@/services/speechService';
 
 export const GestureCard: React.FC = () => {
   const {
@@ -90,15 +91,28 @@ export const GestureCard: React.FC = () => {
 
       {/* Main Gesture Display Hero */}
       <div className="py-4 text-center">
-        <div
-          key={activeGesture}
-          className={`text-4xl sm:text-5xl font-bold tracking-tight transition-transform duration-150 ${
-            activeGesture !== 'NONE'
-              ? 'text-[#101828] dark:text-[#F9FAFB] animate-scale-pop'
-              : 'text-[#98A2B3] dark:text-[#6B7280]'
-          }`}
-        >
-          {activeGesture}
+        <div className="flex items-center justify-center gap-3">
+          <div
+            key={activeGesture}
+            className={`text-4xl sm:text-5xl font-bold tracking-tight transition-transform duration-150 ${
+              activeGesture !== 'NONE'
+                ? 'text-[#101828] dark:text-[#F9FAFB] animate-scale-pop'
+                : 'text-[#98A2B3] dark:text-[#6B7280]'
+            }`}
+          >
+            {activeGesture}
+          </div>
+          {activeGesture !== 'NONE' && (
+            <button
+              onClick={() => speechService.testVoice(activeGesture)}
+              title="Vocalize this gesture out loud"
+              className="p-2 rounded-full bg-[#E0F2FE] dark:bg-[#0E7490]/30 hover:bg-[#BAE6FD] dark:hover:bg-[#0E7490]/50 text-[#0284C7] dark:text-[#38BDF8] transition-all hover:scale-105"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+          )}
         </div>
         <div className="mt-1 text-xs text-[#475467] dark:text-[#9CA3AF] flex items-center justify-center gap-2">
           <span>Engine:</span>

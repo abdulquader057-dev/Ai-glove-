@@ -47,16 +47,6 @@ export function classify(values, options = {}) {
     let sVal = straightVals[i];
     let bVal = bentVals[i];
 
-    // Auto-scale default calibration if incoming ADC is using 12-bit/14-bit scale (e.g. > 1023)
-    // while calibration was left at default ~500:
-    if (val > 1023 && th < 1000 && Math.max(sVal, bVal) < 1000) {
-      // Scale thresholds up proportionally to 14-bit scale
-      const scale = val > 4095 ? 16384 / 1024 : 4096 / 1024;
-      th = th * scale;
-      sVal = sVal * scale;
-      bVal = bVal * scale;
-    }
-
     const isBentHigher = bVal >= sVal;
 
     if (isBentHigher) {

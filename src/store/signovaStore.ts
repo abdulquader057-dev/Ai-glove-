@@ -34,6 +34,9 @@ const DEFAULT_CALIBRATION: CalibrationState = {
   thresholds: [515, 525, 505],
 };
 
+let runningMin: number[] = [Infinity, Infinity, Infinity];
+let runningMax: number[] = [-Infinity, -Infinity, -Infinity];
+
 function loadSavedCalibration(): CalibrationState {
   if (typeof window === 'undefined') return DEFAULT_CALIBRATION;
   try {
@@ -122,6 +125,7 @@ interface SignovaStore {
   setStraightCalibration: (values: number[]) => void;
   setBentCalibration: (values: number[]) => void;
   resetCalibration: () => void;
+  autoCalibrateRestPose: () => void;
 
   // History & Telemetry Log
   history: TelemetryPacket[];
@@ -226,8 +230,27 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     if (typeof window !== 'undefined') {
       localStorage.removeItem(CALIBRATION_STORAGE_KEY);
     }
+    runningMin = [Infinity, Infinity, Infinity];
+    runningMax = [-Infinity, -Infinity, -Infinity];
     set({ calibration: DEFAULT_CALIBRATION });
     get().showToast('Calibration reset to defaults', 'warn');
+  },
+
+  autoCalibrateRestPose: () => {
+    const { smoothedSensors } = get();
+    const straight = [...smoothedSensors];
+    const bent = smoothedSensors.map(v => Math.round(v * 1.35 + 400));
+    const thresholds = straight.map((s, i) => Math.round((s + bent[i]) / 2));
+    const updated: CalibrationState = { straight, bent, thresholds };
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+    }
+    for (let i = 0; i < SENSOR_COUNT; i++) {
+      runningMin[i] = straight[i];
+      runningMax[i] = bent[i];
+    }
+    set({ calibration: updated });
+    get().showToast('Hand Flat Baseline Zeroed! All fingers set to Straight (0)', 'success');
   },
 
   history: loadSavedHistory(),
@@ -360,23 +383,120 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const raw = packet.raw;
     const now = performance.now();
 
+    // ── CASE A: Hardware Direct-Classified Gesture Packet ──────────────
+    if (packet.directGesture) {
+      const instantLabel = packet.directGesture as GestureLabel;
+      const instantBits = (packet.directBits || [0, 0, 0]) as [number, number, number];
+      const instantBinaryString = `${instantBits[0]}${instantBits[1]}${instantBits[2]}`;
+      const instantConfidence = 99.0;
+
+      // Synthetic normalized values for 3D hand articulation
+      const normalized = instantBits.map(b => (b === 1 ? 0.95 : 0.05));
+      const measuredLatency = Math.round((performance.now() - packet.receiveTime) * 10) / 10;
+      const willTriggerSpeech = state.activeGesture !== instantLabel;
+
+      if (willTriggerSpeech && instantLabel !== 'NONE') {
+        speechService.speakGesture(instantLabel);
+      } else if (instantLabel === 'NONE') {
+        speechService.resetLastSpoken();
+      }
+
+      const newEntry: TelemetryPacket = {
+        id: `pk_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: Date.now(),
+        timeString: new Date().toLocaleTimeString('en-GB', { hour12: false }) + '.' + String(Date.now() % 1000).padStart(3, '0'),
+        raw: [...raw],
+        smoothed: [...raw],
+        binaryBits: instantBits,
+        binaryString: instantBinaryString,
+        label: instantLabel,
+        confidence: instantConfidence,
+        latencyMs: measuredLatency > 0 ? measuredLatency : 0.8,
+        source: 'threshold',
+        heldMs: 400,
+      };
+
+      const updatedHistory = willTriggerSpeech ? [newEntry, ...state.history.slice(0, 499)] : state.history;
+      if (willTriggerSpeech && typeof window !== 'undefined') {
+        try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory)); } catch { /* ignore */ }
+      }
+
+      set({
+        rawSensors: raw,
+        smoothedSensors: raw,
+        normalizedSensors: normalized,
+        binaryBits: instantBits,
+        binaryString: instantBinaryString,
+        candidateGesture: instantLabel,
+        candidateStartTime: now,
+        activeGesture: instantLabel,
+        activeConfidence: instantConfidence,
+        holdProgress: 100,
+        realLatencyMs: measuredLatency > 0 ? measuredLatency : state.realLatencyMs,
+        justConfirmed: willTriggerSpeech,
+        history: updatedHistory,
+        streamHz: 50,
+        lastPacketTime: now,
+      });
+
+      if (willTriggerSpeech) setTimeout(() => set({ justConfirmed: false }), 300);
+      return;
+    }
+
+    // ── CASE B: Raw Analog Stream (Index, Middle, Ring ADC) ────────────
     // 1. Moving average smoothing (5 samples)
     const smoothed = filterService.filter(raw);
 
-    // 2. Normalize [0.0–1.0] using calibration
-    const { calibration, classifierSource } = state;
+    // 2. Real-time dynamic calibration per channel
+    const currentCalibration: CalibrationState = {
+      straight: [...state.calibration.straight],
+      bent: [...state.calibration.bent],
+      thresholds: [...state.calibration.thresholds],
+    };
+    let calUpdated = false;
+
+    for (let i = 0; i < SENSOR_COUNT; i++) {
+      const val = smoothed[i];
+      runningMin[i] = Math.min(runningMin[i], val);
+      runningMax[i] = Math.max(runningMax[i], val);
+
+      const s = currentCalibration.straight[i] ?? 250;
+      const b = currentCalibration.bent[i] ?? 780;
+      const minBound = Math.min(s, b);
+      const maxBound = Math.max(s, b);
+
+      // Check if current calibration is uncalibrated/mismatched (e.g. 17746 vs default 500)
+      const isMismatch = (val > 1023 && maxBound < 1000) ||
+                         (val > maxBound * 1.35) ||
+                         (val < minBound * 0.65) ||
+                         (Math.abs(b - s) < 15);
+
+      if (isMismatch) {
+        calUpdated = true;
+        const spread = runningMax[i] - runningMin[i];
+        if (spread > 60) {
+          currentCalibration.straight[i] = runningMin[i];
+          currentCalibration.bent[i] = runningMax[i];
+          currentCalibration.thresholds[i] = Math.round((runningMin[i] + runningMax[i]) / 2);
+        } else {
+          // Resting hand baseline: initialize finger as straight (0)
+          currentCalibration.straight[i] = val;
+          currentCalibration.bent[i] = Math.round(val * 1.35 + 400);
+          currentCalibration.thresholds[i] = Math.round((currentCalibration.straight[i] + currentCalibration.bent[i]) / 2);
+        }
+      }
+    }
+
+    if (calUpdated && typeof window !== 'undefined') {
+      try { localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(currentCalibration)); } catch { /* ignore */ }
+    }
+
+    // 3. Normalize [0.0–1.0] using per-channel calibration
+    const { classifierSource } = state;
     const normalized: number[] = [];
     for (let i = 0; i < SENSOR_COUNT; i++) {
-      let sVal = calibration.straight[i] ?? 250;
-      let bVal = calibration.bent[i] ?? 780;
-      
-      // Auto-scale calibration if sensor returns 12-bit / 14-bit ADC values (> 1023)
-      if (smoothed[i] > 1023 && Math.max(sVal, bVal) < 1000) {
-        const scale = smoothed[i] > 4095 ? 16384 / 1024 : 4096 / 1024;
-        sVal *= scale;
-        bVal *= scale;
-      }
-
+      const sVal = currentCalibration.straight[i];
+      const bVal = currentCalibration.bent[i];
       const minVal = Math.min(sVal, bVal);
       const maxVal = Math.max(sVal, bVal);
       const range = maxVal - minVal || 1;
@@ -385,11 +505,11 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       normalized.push(Math.max(0.0, Math.min(1.0, norm)));
     }
 
-    // 3. Classify
+    // 4. Classify using verified per-finger thresholds
     const rawResult = classify(smoothed, {
-      thresholds: calibration.thresholds,
-      straight: calibration.straight,
-      bent: calibration.bent,
+      thresholds: currentCalibration.thresholds,
+      straight: currentCalibration.straight,
+      bent: currentCalibration.bent,
       source: classifierSource,
     });
 
@@ -398,7 +518,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     const instantBits = rawResult.bits as [number, number, number];
     const instantBinaryString = rawResult.binaryString;
 
-    // 4. 400ms Hold Debounce
+    // 5. 400ms Hold Debounce
     const HOLD_TIME_MS = CONFIG.GESTURE_HOLD_DURATION_MS;
     let nextCandidate = state.candidateGesture;
     let nextCandidateStart = state.candidateStartTime;
@@ -411,6 +531,7 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
       nextCandidateStart = now;
       nextHoldProgress = 0;
       nextActiveGesture = 'NONE';
+      speechService.resetLastSpoken();
     } else {
       const elapsedMs = now - nextCandidateStart;
       if (elapsedMs >= HOLD_TIME_MS) {
@@ -463,15 +584,21 @@ export const useSignovaStore = create<SignovaStore>((set, get) => ({
     }
 
     set({
-      rawSensors: raw, smoothedSensors: smoothed, normalizedSensors: normalized,
-      binaryBits: instantBits, binaryString: instantBinaryString,
-      candidateGesture: nextCandidate, candidateStartTime: nextCandidateStart,
-      activeGesture: nextActiveGesture, activeConfidence: instantConfidence,
+      rawSensors: raw,
+      smoothedSensors: smoothed,
+      normalizedSensors: normalized,
+      binaryBits: instantBits,
+      binaryString: instantBinaryString,
+      candidateGesture: nextCandidate,
+      candidateStartTime: nextCandidateStart,
+      activeGesture: nextActiveGesture,
+      activeConfidence: instantConfidence,
       holdProgress: nextHoldProgress,
       realLatencyMs: cycleLatency > 0 ? cycleLatency : state.realLatencyMs,
       justConfirmed: triggeredFlash,
       streamHz: currentHz,
       lastPacketTime: now,
+      ...(calUpdated ? { calibration: currentCalibration } : {}),
     });
 
     if (triggeredFlash) setTimeout(() => set({ justConfirmed: false }), 300);
