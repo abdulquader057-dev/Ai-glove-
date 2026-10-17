@@ -1,12 +1,16 @@
-// Firebase initialization for SIGNOVA app
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// Firebase initialization for SIGNOVA / Team Syntropy app
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut 
+} from "firebase/auth";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAU0H-eW7p-AjP5fBLcD8_pts7dIwBTCyw",
   authDomain: "syntropy-7e504.firebaseapp.com",
@@ -17,29 +21,21 @@ const firebaseConfig = {
   measurementId: "G-FLENNPM3BZ"
 };
 
-// Initialize Firebase
-export const app = initializeApp(firebaseConfig);
-export const analytics = getAnalytics(app);
+// Initialize Firebase safely for Next.js SSR / HMR
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// ----- Auth -----
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+// Initialize Auth
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
-/**
- * Sign in a user with email & password.
- * @param {string} email
- * @param {string} password
- * @returns {Promise<import('firebase/auth').UserCredential>}
- */
-export const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
+/** Sign in with Email and Password */
+export const signInWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
 
-/**
- * Create a new user with email & password.
- * @param {string} email
- * @param {string} password
- * @returns {Promise<import('firebase/auth').UserCredential>}
- */
-export const signUp = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+/** Sign up with Email and Password */
+export const signUpWithEmail = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+
+/** Sign in with Google Popup */
+export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 
 /** Sign out the current user */
 export const signOutUser = () => signOut(auth);
@@ -47,33 +43,18 @@ export const signOutUser = () => signOut(auth);
 /** Listen for auth state changes */
 export const onAuthStateChangedListener = (callback) => onAuthStateChanged(auth, callback);
 
-// ----- Storage -----
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+// Storage
 export const storage = getStorage(app);
 
-/**
- * Upload a file to Firebase Storage.
- * @param {File} file - browser File object
- * @param {string} path - storage path (e.g., "gestures/${file.name}")
- * @returns {Promise<string>} - download URL of the uploaded file
- */
 export const uploadFile = async (file, path) => {
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
 };
 
-/**
- * Delete a file from Firebase Storage.
- * @param {string} path - storage path of the file to delete
- */
 export const deleteFile = async (path) => {
   const storageRef = ref(storage, path);
   await deleteObject(storageRef);
 };
 
-/**
- * Get a download URL for a stored file.
- * @param {string} path - storage path of the file
- */
 export const getFileURL = (path) => getDownloadURL(ref(storage, path));

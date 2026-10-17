@@ -97,43 +97,43 @@ export const SensorChannels: React.FC = () => {
   }, [normalizedSensors]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 font-mono">
       {/* 1. Flex Sensor Channels */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] p-4 shadow-card">
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#F0F2F5] dark:border-[#1F2937]">
+      <div className="bg-[#0E1218] rounded-xl border border-[#1F2733] p-4 shadow-xl">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#1F2733]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#0E7490]"></span>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#344054] dark:text-[#E5E7EB]">
+            <span className="w-2 h-2 rounded-full bg-[#2EE6A6]"></span>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">
               Flex Channels
             </h2>
           </div>
-          <span className="text-[10px] font-mono text-[#0E7490] dark:text-[#38BDF8] font-semibold">
+          <span className="text-[10px] font-mono text-[#2EE6A6] font-bold">
             Auto-Adaptive
           </span>
         </div>
 
         {/* Quick Zero Flat Hand Action */}
-        <div className="mt-2.5 pb-2.5 border-b border-[#F0F2F5] dark:border-[#1F2937] flex items-center justify-between">
-          <span className="text-[10px] text-[#667085] dark:text-[#9CA3AF]">
+        <div className="mt-2.5 pb-2.5 border-b border-[#1F2733] flex items-center justify-between">
+          <span className="text-[10px] text-[#9CA3AF]">
             Current Hand Pose:
           </span>
           <button
             onClick={autoCalibrateRestPose}
             title="Set current hand posture as Straight (0) baseline"
-            className="px-2.5 py-1 rounded bg-[#E0F2FE] hover:bg-[#BAE6FD] dark:bg-[#0E7490]/30 dark:hover:bg-[#0E7490]/50 text-[#0E7490] dark:text-[#38BDF8] text-[10px] font-bold flex items-center gap-1 transition-all hover:scale-105"
+            className="px-2.5 py-1 rounded bg-[#2EE6A6]/15 hover:bg-[#2EE6A6]/30 border border-[#2EE6A6]/40 text-[#2EE6A6] text-[10px] font-bold flex items-center gap-1 transition-all hover:scale-105 cursor-pointer"
           >
             <span>⚡ Zero Flat Hand</span>
           </button>
         </div>
 
         {/* 3 Finger Channel Meters */}
-        <div className="mt-2.5 space-y-2.5">
+        <div className="mt-2.5 space-y-3">
           {SENSOR_NAMES.map((name, idx) => {
             const raw = rawSensors[idx] ?? 0;
             const norm = normalizedSensors[idx] ?? 0;
             const isBent = binaryBits[idx] === 1;
             const thresh = calibration.thresholds[idx] ?? 512;
-            const channelColor = idx === 0 ? '#0E7490' : idx === 1 ? '#2563EB' : '#7C3AED';
+            const channelColor = idx === 0 ? '#2EE6A6' : idx === 1 ? '#38BDF8' : '#A78BFA';
 
             return (
               <div key={name} className="space-y-1">
@@ -143,17 +143,17 @@ export const SensorChannels: React.FC = () => {
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: channelColor }}
                     />
-                    <span className="font-medium text-[#101828] dark:text-[#F9FAFB]">{name}</span>
+                    <span className="font-semibold text-white">{name}</span>
                   </div>
                   <div className="flex items-center gap-2 font-mono text-[11px]">
-                    <span className="text-[#667085] dark:text-[#9CA3AF]">
+                    <span className="text-[#9CA3AF]">
                       {isConnected ? raw : '—'}
                     </span>
                     <span
-                      className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                         isBent
-                          ? 'bg-[#FEF3C7] dark:bg-[#78350F]/50 text-[#B45309] dark:text-[#FDE68A]'
-                          : 'bg-[#F0F2F5] dark:bg-[#1F2937] text-[#475467] dark:text-[#9CA3AF]'
+                          ? 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/50'
+                          : 'bg-[#141922] text-[#9CA3AF] border border-[#1F2733]'
                       }`}
                     >
                       {isBent ? 'BENT (1)' : 'STR (0)'}
@@ -162,21 +162,22 @@ export const SensorChannels: React.FC = () => {
                 </div>
 
                 {/* Meter Bar with Midpoint Threshold Marker */}
-                <div className="relative w-full h-2.5 bg-[#F0F2F5] dark:bg-[#1F2937] rounded-full overflow-hidden">
+                <div className="relative w-full h-3 bg-[#141922] border border-[#1F2733] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-100 ease-out"
                     style={{
                       width: `${Math.round(norm * 100)}%`,
                       backgroundColor: channelColor,
+                      boxShadow: isBent ? `0 0 10px ${channelColor}` : 'none',
                     }}
                   />
                   {/* Midpoint marker at 50% */}
-                  <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-[#98A2B3] opacity-40" />
+                  <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-yellow-400 opacity-60" />
                 </div>
 
-                <div className="flex justify-between text-[10px] text-[#98A2B3] dark:text-[#64748B] font-mono px-0.5">
+                <div className="flex justify-between text-[10px] text-[#6B7280] font-mono px-0.5">
                   <span>Str: {calibration.straight[idx]}</span>
-                  <span>Thresh: {thresh}</span>
+                  <span className="text-yellow-400/80">Thresh: {thresh}</span>
                   <span>Bnt: {calibration.bent[idx]}</span>
                 </div>
               </div>
@@ -186,22 +187,22 @@ export const SensorChannels: React.FC = () => {
       </div>
 
       {/* 2. Rolling Oscilloscope Strip */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] p-4 shadow-card">
-        <div className="flex items-center justify-between pb-2 border-b border-[#F0F2F5] dark:border-[#1F2937]">
+      <div className="bg-[#0E1218] rounded-xl border border-[#1F2733] p-4 shadow-xl">
+        <div className="flex items-center justify-between pb-2 border-b border-[#1F2733]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#344054] dark:text-[#E5E7EB]">
+            <span className="w-2 h-2 rounded-full bg-[#38BDF8]"></span>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">
               Signal Stream
             </h2>
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-mono text-[#667085] dark:text-[#9CA3AF]">
-            <span className="text-[#0E7490]">● F1</span>
-            <span className="text-[#2563EB]">● F2</span>
-            <span className="text-[#7C3AED]">● F3</span>
+          <div className="flex items-center gap-2 text-[10px] font-mono">
+            <span className="text-[#2EE6A6]">● F1</span>
+            <span className="text-[#38BDF8]">● F2</span>
+            <span className="text-[#A78BFA]">● F3</span>
           </div>
         </div>
 
-        <div className="mt-2 w-full h-24 bg-[#F8F9FA] dark:bg-[#141C2B] rounded-lg overflow-hidden border border-[#E4E7EC] dark:border-[#1F2937] relative">
+        <div className="mt-2 w-full h-24 bg-[#07090D] rounded-lg overflow-hidden border border-[#1F2733] relative">
           <canvas
             ref={canvasRef}
             width={320}
@@ -209,7 +210,7 @@ export const SensorChannels: React.FC = () => {
             className="w-full h-full block"
           />
           {!isConnected && (
-            <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#98A2B3]">
+            <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#6B7280]">
               Waiting for stream…
             </div>
           )}
@@ -217,11 +218,11 @@ export const SensorChannels: React.FC = () => {
       </div>
 
       {/* 3. Session Vocalization History Log */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] p-4 shadow-card">
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#F0F2F5] dark:border-[#1F2937]">
+      <div className="bg-[#0E1218] rounded-xl border border-[#1F2733] p-4 shadow-xl">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#1F2733]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#12B76A]"></span>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#344054] dark:text-[#E5E7EB]">
+            <span className="w-2 h-2 rounded-full bg-[#2EE6A6]"></span>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">
               Vocalization Log
             </h2>
           </div>
@@ -229,7 +230,7 @@ export const SensorChannels: React.FC = () => {
             <button
               onClick={exportHistoryCSV}
               disabled={history.length === 0}
-              className="text-[10px] px-2 py-0.5 rounded border border-[#D0D5DD] dark:border-[#374151] hover:bg-[#F2F4F7] dark:hover:bg-[#1F2937] disabled:opacity-40 text-[#344054] dark:text-[#E5E7EB]"
+              className="text-[10px] px-2 py-0.5 rounded border border-[#1F2733] bg-[#141922] hover:bg-[#1E2533] disabled:opacity-40 text-[#D1D5DB] cursor-pointer"
               title="Export as CSV"
             >
               CSV
@@ -237,7 +238,7 @@ export const SensorChannels: React.FC = () => {
             <button
               onClick={exportHistoryJSON}
               disabled={history.length === 0}
-              className="text-[10px] px-2 py-0.5 rounded border border-[#D0D5DD] dark:border-[#374151] hover:bg-[#F2F4F7] dark:hover:bg-[#1F2937] disabled:opacity-40 text-[#344054] dark:text-[#E5E7EB]"
+              className="text-[10px] px-2 py-0.5 rounded border border-[#1F2733] bg-[#141922] hover:bg-[#1E2533] disabled:opacity-40 text-[#D1D5DB] cursor-pointer"
               title="Export as JSON"
             >
               JSON
@@ -245,7 +246,7 @@ export const SensorChannels: React.FC = () => {
             <button
               onClick={clearHistory}
               disabled={history.length === 0}
-              className="text-[10px] px-1.5 py-0.5 rounded text-[#D92D20] hover:bg-[#FEE4E2] dark:hover:bg-[#7F1D1D]/30 disabled:opacity-40"
+              className="text-[10px] px-1.5 py-0.5 rounded text-[#EF4444] hover:bg-[#EF4444]/20 disabled:opacity-40 cursor-pointer"
               title="Clear Log"
             >
               Clear
@@ -256,26 +257,26 @@ export const SensorChannels: React.FC = () => {
         {/* History Item List */}
         <div className="mt-2 space-y-1.5 max-h-56 overflow-y-auto pr-1">
           {history.length === 0 ? (
-            <div className="py-6 text-center text-xs text-[#98A2B3] dark:text-[#64748B]">
+            <div className="py-6 text-center text-xs text-[#6B7280]">
               No gestures vocalized yet this session.
             </div>
           ) : (
             history.map((item) => (
               <div
                 key={item.id}
-                className="p-2 rounded-lg bg-[#F9FAFB] dark:bg-[#1A2230] border border-[#F2F4F7] dark:border-[#242F42] flex items-center justify-between text-xs"
+                className="p-2 rounded-lg bg-[#141922] border border-[#1F2733] flex items-center justify-between text-xs"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#101828] dark:text-[#F9FAFB]">
+                  <span className="font-bold text-[#2EE6A6]">
                     {item.label}
                   </span>
-                  <span className="font-mono text-[10px] text-[#667085] dark:text-[#9CA3AF]">
+                  <span className="font-mono text-[10px] text-[#9CA3AF]">
                     [{item.binaryString}]
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 font-mono text-[10px] text-[#667085] dark:text-[#9CA3AF]">
-                  <span className="text-[#0E7490] dark:text-[#14B8A6] font-semibold">
+                <div className="flex items-center gap-2 font-mono text-[10px] text-[#9CA3AF]">
+                  <span className="text-[#38BDF8] font-bold">
                     {item.latencyMs}ms
                   </span>
                   <span>·</span>

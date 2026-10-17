@@ -22,8 +22,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        sans: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
+        mono: ["'JetBrains Mono'", "var(--font-geist-mono)", "ui-monospace", "monospace"],
+        space: ["'Space Grotesk'", "sans-serif"],
+        syne: ["'Syne'", "sans-serif"],
       },
       borderRadius: {
         xs: "2px",

@@ -74,8 +74,8 @@ function loadSavedHistory(): TelemetryPacket[] {
 
 interface SignovaStore {
   // Navigation
-  activeView: 'connect' | 'live' | 'calibrate';
-  setActiveView: (view: 'connect' | 'live' | 'calibrate') => void;
+  activeView: 'landing' | 'live' | 'connect' | 'calibrate';
+  setActiveView: (view: 'landing' | 'live' | 'connect' | 'calibrate') => void;
 
   // Calibration Modal
   isCalibrationOpen: boolean;
@@ -151,7 +151,7 @@ interface SignovaStore {
 }
 
 export const useSignovaStore = create<SignovaStore>((set, get) => ({
-  activeView: 'live',
+  activeView: 'landing',
   setActiveView: (view) => set({ activeView: view }),
 
   isCalibrationOpen: false,

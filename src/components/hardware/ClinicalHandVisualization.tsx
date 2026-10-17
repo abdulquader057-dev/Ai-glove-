@@ -275,24 +275,24 @@ export const ClinicalHandVisualization: React.FC = () => {
   );
 
   return (
-    <div className="relative w-full h-full min-h-[460px] flex flex-col items-center justify-center p-3 sm:p-5 bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] shadow-card overflow-hidden">
+    <div className="relative w-full h-full min-h-[460px] flex flex-col items-center justify-center p-3 sm:p-5 bg-[#0E1218] rounded-xl border border-[#1F2733] shadow-xl overflow-hidden font-mono">
       {/* Top Telemetry Header Inside Card */}
-      <div className="w-full flex items-center justify-between mb-2 px-2 text-xs border-b border-[#F0F2F5] dark:border-[#1F2937] pb-2">
+      <div className="w-full flex items-center justify-between mb-2 px-2 text-xs border-b border-[#1F2733] pb-2">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#0E7490] animate-pulse"></span>
-          <span className="font-semibold text-[#101828] dark:text-[#F9FAFB] tracking-tight">
+          <span className="w-2 h-2 rounded-full bg-[#2EE6A6] animate-pulse"></span>
+          <span className="font-bold text-white tracking-tight">
             Anatomical Kinematics
           </span>
-          <span className="text-[10px] text-[#64748B] dark:text-[#9CA3AF] bg-[#F1F5F9] dark:bg-[#1F2937] px-1.5 py-0.5 rounded font-mono">
-            3-Axis Flex
+          <span className="text-[10px] text-[#2EE6A6] bg-[#2EE6A6]/10 border border-[#2EE6A6]/30 px-1.5 py-0.5 rounded font-bold font-mono">
+            3-Axis Flex Active
           </span>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[11px] text-[#64748B] dark:text-[#9CA3AF]">
-          <span>Index {Math.round(indexNorm * 100)}%</span>
+        <div className="flex items-center gap-3 font-mono text-[11px] text-[#9CA3AF]">
+          <span>Index <strong className="text-[#2EE6A6]">{Math.round(indexNorm * 100)}%</strong></span>
           <span>·</span>
-          <span>Middle {Math.round(middleNorm * 100)}%</span>
+          <span>Middle <strong className="text-[#38BDF8]">{Math.round(middleNorm * 100)}%</strong></span>
           <span>·</span>
-          <span>Ring {Math.round(ringNorm * 100)}%</span>
+          <span>Ring <strong className="text-[#A78BFA]">{Math.round(ringNorm * 100)}%</strong></span>
         </div>
       </div>
 
@@ -448,16 +448,16 @@ export const ClinicalHandVisualization: React.FC = () => {
 
         {/* Offline Overlay Watermark */}
         {!isConnected && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white/70 dark:bg-[#111827]/80 backdrop-blur-xs rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-[#F1F5F9] dark:bg-[#1F2937] flex items-center justify-center text-[#64748B] mb-2 border border-[#E2E8F0] dark:border-[#374151]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-[#07090D]/80 backdrop-blur-xs rounded-xl">
+            <div className="w-10 h-10 rounded-full bg-[#141922] flex items-center justify-center text-[#2EE6A6] mb-2 border border-[#1F2733] shadow-[0_0_15px_rgba(46,230,166,0.2)]">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-[#1E293B] dark:text-[#F1F5F9]">
-              Live Kinematics Offline
+            <p className="text-sm font-bold text-white">
+              Live Kinematics Standby
             </p>
-            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] max-w-xs mt-1">
+            <p className="text-xs text-[#9CA3AF] max-w-xs mt-1">
               Connect glove via USB (115200 baud) or BLE, or press keys 1–8 to simulate gestures.
             </p>
           </div>
@@ -466,7 +466,7 @@ export const ClinicalHandVisualization: React.FC = () => {
 
       {/* Floating Ghost Badge During Debounce */}
       {ghostChains && holdProgress > 0 && (
-        <div className="mt-2 flex items-center gap-2 px-3 py-1 bg-[#FEF3C7] dark:bg-[#78350F]/40 border border-[#F59E0B] rounded-full text-[11px] text-[#92400E] dark:text-[#FDE68A] animate-pulse">
+        <div className="mt-2 flex items-center gap-2 px-3 py-1 bg-[#F59E0B]/15 border border-[#F59E0B]/60 rounded-full text-[11px] text-[#F59E0B] animate-pulse">
           <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>
           <span>Target Pose: <strong>{candidateGesture}</strong></span>
           <span className="font-mono">({holdProgress}%)</span>

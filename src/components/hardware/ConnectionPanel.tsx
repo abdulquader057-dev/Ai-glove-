@@ -38,17 +38,17 @@ export const ConnectionPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 font-mono">
       {/* 1. Hardware Connection Controller */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] p-4 shadow-card">
-        <div className="flex items-center justify-between pb-3 border-b border-[#F0F2F5] dark:border-[#1F2937]">
+      <div className="bg-[#0E1218] rounded-xl border border-[#1F2733] p-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#1F2733]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#0E7490]"></span>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#344054] dark:text-[#E5E7EB]">
+            <span className="w-2 h-2 rounded-full bg-[#2EE6A6] animate-pulse"></span>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">
               Hardware Interface
             </h2>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#F0F2F5] dark:bg-[#1F2937] text-[#475467] dark:text-[#9CA3AF]">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161D27] border border-[#232E3E] text-[#2EE6A6] font-semibold">
             115200 bps
           </span>
         </div>
@@ -61,32 +61,32 @@ export const ConnectionPanel: React.FC = () => {
               <button
                 onClick={connectSerial}
                 disabled={!webSerialSupported}
-                className="w-full py-2.5 px-3 bg-[#0E7490] hover:bg-[#155E75] disabled:bg-[#94A3B8] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-3 bg-[#2EE6A6] hover:bg-[#22C58B] disabled:opacity-40 text-[#07090D] text-xs font-black rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg className="w-4 h-4 text-[#07090D]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span>Connect USB Glove</span>
+                <span>CONNECT USB GLOVE</span>
               </button>
 
               {/* Secondary Bluetooth LE Connect */}
               <button
                 onClick={connectBLE}
                 disabled={!webBleSupported}
-                className="w-full py-2 px-3 bg-white dark:bg-[#1F2937] hover:bg-[#F8F9FA] dark:hover:bg-[#374151]/50 border border-[#D0D5DD] dark:border-[#374151] text-[#344054] dark:text-[#E5E7EB] text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2 px-3 bg-[#141922] hover:bg-[#1E2533] border border-[#1F2733] hover:border-[#38BDF8]/60 text-[#38BDF8] text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <svg className="w-4 h-4 text-[#0E7490] dark:text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-[#38BDF8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
-                <span>Connect Bluetooth LE</span>
+                <span>CONNECT BLE WIRELESS</span>
               </button>
             </>
           ) : (
             <div className="space-y-2">
-              <div className="p-2.5 rounded-lg bg-[#ECFDF3] dark:bg-[#064E3B]/30 border border-[#A6F4C5] dark:border-[#059669]/50 text-xs text-[#027A48] dark:text-[#A7F3D0] flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-[#2EE6A6]/10 border border-[#2EE6A6]/40 text-xs text-[#2EE6A6] flex items-center justify-between shadow-[0_0_10px_rgba(46,230,166,0.15)]">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#12B76A] animate-pulse"></span>
-                  <span className="font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-[#2EE6A6] animate-pulse"></span>
+                  <span className="font-bold">
                     {connectionMedium === 'usb_serial' ? 'USB Serial Active' : connectionMedium === 'ble' ? 'Bluetooth Active' : 'Simulation Active'}
                   </span>
                 </div>
@@ -95,12 +95,12 @@ export const ConnectionPanel: React.FC = () => {
 
               <button
                 onClick={connectionMedium === 'ble' ? disconnectBLE : disconnectSerial}
-                className="w-full py-2 px-3 bg-white dark:bg-[#1F2937] hover:bg-[#FEE4E2] dark:hover:bg-[#7F1D1D]/30 border border-[#FDA29B] text-[#D92D20] text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2 px-3 bg-[#141922] hover:bg-[#EF4444]/20 border border-[#EF4444]/50 text-[#EF4444] text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                <span>Disconnect Hardware</span>
+                <span>DISCONNECT HARDWARE</span>
               </button>
             </div>
           )}
@@ -119,36 +119,36 @@ export const ConnectionPanel: React.FC = () => {
         )}
 
         {/* Hardware Specs Sheet */}
-        <div className="mt-3 pt-3 border-t border-[#F0F2F5] dark:border-[#1F2937] text-[11px] text-[#667085] dark:text-[#9CA3AF] space-y-1 font-mono">
+        <div className="mt-3 pt-3 border-t border-[#1F2733] text-[11px] text-[#9CA3AF] space-y-1 font-mono">
           <div className="flex justify-between">
-            <span className="text-[#98A2B3]">Microcontroller</span>
-            <span className="text-[#344054] dark:text-[#E5E7EB]">Seeed XIAO nRF52840</span>
+            <span className="text-[#6B7280]">Microcontroller</span>
+            <span className="text-white font-semibold">Seeed XIAO nRF52840 / Uno</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#98A2B3]">Analog Channels</span>
-            <span className="text-[#344054] dark:text-[#E5E7EB]">3 Flex (Index, Mid, Ring)</span>
+            <span className="text-[#6B7280]">Analog Channels</span>
+            <span className="text-[#2EE6A6] font-semibold">3 Flex (Index, Mid, Ring)</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#98A2B3]">Packet Format</span>
-            <span className="text-[#344054] dark:text-[#E5E7EB]">f1,f2,f3\n (~50 Hz)</span>
+            <span className="text-[#6B7280]">Packet Format</span>
+            <span className="text-white">f1,f2,f3\n (~50 Hz)</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#98A2B3]">Hold Guard</span>
-            <span className="text-[#344054] dark:text-[#E5E7EB]">400 ms Stable Lock</span>
+            <span className="text-[#6B7280]">Hold Guard</span>
+            <span className="text-[#38BDF8] font-bold">400 ms Stable Lock</span>
           </div>
         </div>
       </div>
 
       {/* 2. 8-Gesture Dictionary Matrix */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-[#E4E7EC] dark:border-[#1F2937] p-4 shadow-card">
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#F0F2F5] dark:border-[#1F2937]">
+      <div className="bg-[#0E1218] rounded-xl border border-[#1F2733] p-4 shadow-xl">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#1F2733]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#12B76A]"></span>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#344054] dark:text-[#E5E7EB]">
+            <span className="w-2 h-2 rounded-full bg-[#2EE6A6]"></span>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">
               Gesture Dictionary
             </h2>
           </div>
-          <span className="text-[10px] text-[#667085] dark:text-[#9CA3AF]">
+          <span className="text-[10px] text-[#9CA3AF]">
             8 Poses (Idx-Mid-Rng)
           </span>
         </div>
@@ -165,25 +165,25 @@ export const ConnectionPanel: React.FC = () => {
                 onClick={() => handleGestureClick(idx)}
                 className={`p-2 rounded-lg border text-xs flex items-center justify-between cursor-pointer transition-all ${
                   isConfirmed
-                    ? 'bg-[#E0F2FE] dark:bg-[#0E7490]/30 border-[#0E7490] text-[#0C4A6E] dark:text-[#7DD3FC] font-semibold shadow-xs'
+                    ? 'bg-[#2EE6A6]/15 border-[#2EE6A6] text-[#2EE6A6] font-bold shadow-[0_0_12px_rgba(46,230,166,0.25)] scale-[1.02]'
                     : isCandidate
-                    ? 'bg-[#FEF3C7] dark:bg-[#78350F]/20 border-[#F59E0B] text-[#92400E] dark:text-[#FDE68A]'
-                    : 'bg-[#F9FAFB] dark:bg-[#1A2230] border-[#F2F4F7] dark:border-[#242F42] text-[#344054] dark:text-[#D1D5DB] hover:border-[#D0D5DD]'
+                    ? 'bg-[#F59E0B]/20 border-[#F59E0B] text-[#F59E0B] animate-pulse'
+                    : 'bg-[#141922] border-[#1F2733] text-[#D1D5DB] hover:border-[#2EE6A6]/40 hover:bg-[#1A2230]'
                 }`}
                 title={`Click to simulate ${gesture.label} (Key ${idx + 1})`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-[#111827] border border-[#E4E7EC] dark:border-[#374151] text-[#475467] dark:text-[#9CA3AF]">
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#07090D] border border-[#1F2733] text-[#9CA3AF]">
                     {pattern}
                   </span>
-                  <span className="font-medium">{gesture.label}</span>
+                  <span className="font-semibold">{gesture.label}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-[#667085] dark:text-[#9CA3AF] hidden sm:inline">
+                  <span className="text-[10px] text-[#9CA3AF] hidden sm:inline">
                     {gesture.desc}
                   </span>
-                  <kbd className="font-mono text-[9px] px-1 py-0.5 rounded bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-[#667085]">
+                  <kbd className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-[#07090D] border border-[#1F2733] text-[#2EE6A6] font-bold">
                     {idx + 1}
                   </kbd>
                 </div>
@@ -192,7 +192,7 @@ export const ConnectionPanel: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-3 pt-2 text-center text-[10px] text-[#98A2B3] dark:text-[#64748B]">
+        <div className="mt-3 pt-2 text-center text-[10px] text-[#6B7280]">
           Press keyboard 1–8 anytime to test gestures instantly
         </div>
       </div>
