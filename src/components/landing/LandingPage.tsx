@@ -98,6 +98,29 @@ export const LandingPage: React.FC = () => {
         }}
       />
 
+      {/* ── ATMOS Reverse-Engineered Film Grain Overlay ────────────── */}
+      <div className="atmos-grain" />
+
+      {/* ── ATMOS Reverse-Engineered Celestial Concentric Vortex Rings ── */}
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[780px] h-[780px] pointer-events-none z-5 opacity-25 select-none hidden md:block">
+        <svg viewBox="0 0 500 500" className="w-full h-full hero-vortex">
+          <circle cx="250" cy="250" r="230" stroke="#00F2A6" strokeWidth="1" strokeDasharray="4 8" fill="none" opacity="0.4" />
+          <circle cx="250" cy="250" r="200" stroke="#00D2FF" strokeWidth="0.8" strokeDasharray="2 12" fill="none" opacity="0.3" />
+          <circle cx="250" cy="250" r="160" stroke="#FFFFFF" strokeWidth="0.5" strokeDasharray="1 16" fill="none" opacity="0.2" />
+          {/* Outer Degree Markers */}
+          <line x1="250" y1="12" x2="250" y2="28" stroke="#00F2A6" strokeWidth="1.5" />
+          <line x1="250" y1="472" x2="250" y2="488" stroke="#00F2A6" strokeWidth="1.5" />
+          <line x1="12" y1="250" x2="28" y2="250" stroke="#00D2FF" strokeWidth="1.5" />
+          <line x1="472" y1="250" x2="488" y2="250" stroke="#00D2FF" strokeWidth="1.5" />
+        </svg>
+      </div>
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none z-5 opacity-15 select-none hidden md:block">
+        <svg viewBox="0 0 400 400" className="w-full h-full hero-vortex-reverse">
+          <circle cx="200" cy="200" r="180" stroke="#00F2A6" strokeWidth="1" strokeDasharray="8 16" fill="none" opacity="0.5" />
+          <circle cx="200" cy="200" r="140" stroke="#00D2FF" strokeWidth="0.8" strokeDasharray="4 8" fill="none" opacity="0.3" />
+        </svg>
+      </div>
+
       {/* ── Fixed High-DPI Full-Screen Canvas Engine (164 Frames) ─────── */}
       <AtmosCanvasEngine progress={progress} />
 

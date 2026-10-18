@@ -1,6 +1,6 @@
-// ATMOS High-DPI Full-Screen Canvas Engine
-// Renders the 164-frame AI glove sequence with pristine sharpness, zero blur,
-// and right-center viewport alignment.
+// ATMOS High-DPI Full-Screen Canvas Engine with Spring-Damped Inertial Physics
+// Features: Full-screen cover scaling, 2nd-order critically damped smooth scrubbing,
+// and floating ambient cybernetic particle stardust.
 
 'use client';
 
@@ -14,6 +14,16 @@ export function getFrameUrl(index: number): string {
   const clamped = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(index)));
   const pad = String(clamped).padStart(3, '0');
   return `${SUPABASE_BASE_URL}frame_${pad}_delay-0.042s.webp`;
+}
+
+interface Particle {
+  x: number;
+  y: number;
+  size: number;
+  speedY: number;
+  speedX: number;
+  opacity: number;
+  color: string;
 }
 
 interface AtmosCanvasEngineProps {
@@ -30,12 +40,47 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const lastDrawnFrameRef = useRef<number>(-1);
 
-  // Draw target frame with high-DPI scaling and right-center contain fit
-  const drawFrame = useCallback((frameIdx: number) => {
+  // Smooth inertial physics tracker
+  const smoothedProgressRef = useRef<number>(0);
+  const targetProgressRef = useRef<number>(0);
+  const animFrameIdRef = useRef<number | null>(null);
+
+  // Ambient cybernetic particles
+  const particlesRef = useRef<Particle[]>([]);
+
+  // Initialize ambient particle field
+  useEffect(() => {
+    const particles: Particle[] = [];
+    const count = 35;
+    const colors = ['#00F2A6', '#00D2FF', '#FFFFFF', '#7E8B95'];
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random(),
+        y: Math.random(),
+        size: Math.random() * 1.8 + 0.6,
+        speedY: (Math.random() - 0.5) * 0.0003,
+        speedX: (Math.random() - 0.5) * 0.0002,
+        opacity: Math.random() * 0.5 + 0.2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
+    particlesRef.current = particles;
+  }, []);
+
+  // Update target progress from props
+  useEffect(() => {
+    targetProgressRef.current = Math.max(0, Math.min(1, progress));
+  }, [progress]);
+
+  // Draw target frame with high-DPI scaling and full-screen cover
+  const drawScene = useCallback((p: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
+
+    const frameIdx = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(p * (TOTAL_FRAMES - 1))));
 
     // Retrieve requested frame or nearest loaded fallback
     let img = imagesRef.current[frameIdx];
@@ -83,6 +128,28 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
 
     ctx.drawImage(img, dx, dy, dw, dh);
 
+    // Render floating ambient cybernetic particle field
+    const particles = particlesRef.current;
+    for (let i = 0; i < particles.length; i++) {
+      const pt = particles[i];
+      pt.x += pt.speedX;
+      pt.y += pt.speedY;
+      if (pt.x < 0) pt.x = 1;
+      if (pt.x > 1) pt.x = 0;
+      if (pt.y < 0) pt.y = 1;
+      if (pt.y > 1) pt.y = 0;
+
+      ctx.save();
+      ctx.globalAlpha = pt.opacity * (1 - p * 0.4);
+      ctx.fillStyle = pt.color;
+      ctx.shadowColor = pt.color;
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(pt.x * W, pt.y * H, pt.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     ctx.restore();
     lastDrawnFrameRef.current = frameIdx;
   }, []);
@@ -104,7 +171,7 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
           imagesRef.current[idx] = img;
           if (idx === 0) {
             setIsLoaded(true);
-            drawFrame(0);
+            drawScene(0);
           }
           resolve();
         };
@@ -142,7 +209,40 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
     return () => {
       active = false;
     };
-  }, [drawFrame]);
+  }, [drawScene]);
+
+  // Spring-Damped Continuous Physics Render Loop
+  useEffect(() => {
+    let active = true;
+
+    const renderLoop = () => {
+      if (!active) return;
+
+      // 2nd-order critically damped spring interpolation (matching ATMOS physics)
+      const target = targetProgressRef.current;
+      const current = smoothedProgressRef.current;
+      const diff = target - current;
+
+      if (Math.abs(diff) > 0.0001) {
+        smoothedProgressRef.current += diff * 0.12;
+      } else {
+        smoothedProgressRef.current = target;
+      }
+
+      drawScene(smoothedProgressRef.current);
+
+      animFrameIdRef.current = requestAnimationFrame(renderLoop);
+    };
+
+    animFrameIdRef.current = requestAnimationFrame(renderLoop);
+
+    return () => {
+      active = false;
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+      }
+    };
+  }, [drawScene]);
 
   // Handle Resize and Retina DPI buffer scaling
   useEffect(() => {
@@ -154,22 +254,13 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
       canvas.width = Math.round(window.innerWidth * dpr);
       canvas.height = Math.round(window.innerHeight * dpr);
 
-      const targetFrame = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(progress * (TOTAL_FRAMES - 1))));
-      drawFrame(targetFrame);
+      drawScene(smoothedProgressRef.current);
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [progress, drawFrame]);
-
-  // Redraw when scroll progress updates
-  useEffect(() => {
-    const targetFrame = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(progress * (TOTAL_FRAMES - 1))));
-    if (targetFrame !== lastDrawnFrameRef.current) {
-      drawFrame(targetFrame);
-    }
-  }, [progress, drawFrame]);
+  }, [drawScene]);
 
   // Clean fadeout as progress enters 90%-100%
   const effectiveOpacity = progress >= 0.88 ? Math.max(0, 1 - (progress - 0.88) / 0.10) : opacity;

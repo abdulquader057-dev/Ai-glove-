@@ -68,7 +68,10 @@ export const AtmosScrollytelling: React.FC<AtmosScrollytellingProps> = ({
         {/* Huge Headline in Space Grotesk / Architectural Bone-White */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-space font-black tracking-tight text-[#F6F6F8] uppercase leading-[1.05]">
           TURNING GESTURES{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00F2A6] via-[#00D2FF] to-[#00F2A6] drop-shadow-[0_0_35px_rgba(0,242,166,0.3)]">
+          <span
+            className="glitch-text text-transparent bg-clip-text bg-gradient-to-r from-[#00F2A6] via-[#00D2FF] to-[#00F2A6] drop-shadow-[0_0_35px_rgba(0,242,166,0.3)]"
+            data-text="INTO A VOICE."
+          >
             INTO A VOICE.
           </span>
         </h1>
