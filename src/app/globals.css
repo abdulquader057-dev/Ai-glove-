@@ -198,3 +198,86 @@ body {
 .glitch-text:hover::after {
   animation: glitch-b 0.45s steps(2, end) infinite;
 }
+
+/* 5. Precision Reticle Cursor System */
+html.has-reticle,
+html.has-reticle * {
+  cursor: none !important;
+}
+html.has-reticle input,
+html.has-reticle textarea {
+  cursor: text !important;
+}
+
+/* 6. ATMOS Cybernetic Button System */
+@keyframes light-sweep {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(250%) skewX(-20deg); }
+}
+
+.atmos-btn-primary {
+  position: relative;
+  overflow: hidden;
+  background: #F8FAFC;
+  color: #030407;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 20px rgba(248, 250, 252, 0.25);
+}
+
+.atmos-btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+}
+
+.atmos-btn-primary:hover::before {
+  animation: light-sweep 1.2s ease-in-out infinite;
+}
+
+.atmos-btn-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 35px rgba(0, 242, 166, 0.5), 0 0 10px rgba(255, 255, 255, 0.9);
+  background: #FFFFFF;
+}
+
+.atmos-btn-ghost {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #F8FAFC;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+}
+
+.atmos-btn-ghost:hover {
+  border-color: #00F2A6;
+  color: #00F2A6;
+  background: rgba(0, 242, 166, 0.08);
+  box-shadow: 0 0 25px rgba(0, 242, 166, 0.25);
+  transform: translateY(-2px);
+}
+
+/* 7. Architectural Stencil Display Typography */
+.font-stencil {
+  font-family: 'Space Grotesk', 'Syne', sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+

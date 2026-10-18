@@ -45,6 +45,11 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
   const targetProgressRef = useRef<number>(0);
   const animFrameIdRef = useRef<number | null>(null);
 
+  // 3D Mouse Parallax Tracker
+  const mouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const smoothedMouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [tiltStyle, setTiltStyle] = useState<string>('');
+
   // Ambient cybernetic particles
   const particlesRef = useRef<Particle[]>([]);
 
@@ -211,6 +216,21 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
     };
   }, [drawScene]);
 
+  // Track mouse coordinates for 3D gyroscope parallax
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      mouseRef.current = {
+        x: (e.clientX - w / 2) / (w / 2),
+        y: (e.clientY - h / 2) / (h / 2),
+      };
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   // Spring-Damped Continuous Physics Render Loop
   useEffect(() => {
     let active = true;
@@ -228,6 +248,21 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
       } else {
         smoothedProgressRef.current = target;
       }
+
+      // Smooth mouse parallax physics
+      const targetMx = mouseRef.current.x;
+      const targetMy = mouseRef.current.y;
+      smoothedMouseRef.current.x += (targetMx - smoothedMouseRef.current.x) * 0.06;
+      smoothedMouseRef.current.y += (targetMy - smoothedMouseRef.current.y) * 0.06;
+
+      const rotY = smoothedMouseRef.current.x * 3.5;
+      const rotX = -smoothedMouseRef.current.y * 3.5;
+      const transX = smoothedMouseRef.current.x * 12;
+      const transY = smoothedMouseRef.current.y * 12;
+
+      setTiltStyle(
+        `perspective(1200px) rotateY(${rotY.toFixed(2)}deg) rotateX(${rotX.toFixed(2)}deg) translate3d(${transX.toFixed(1)}px, ${transY.toFixed(1)}px, 0)`
+      );
 
       drawScene(smoothedProgressRef.current);
 
@@ -269,10 +304,11 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
     <div
       style={{
         opacity: effectiveOpacity,
+        transform: tiltStyle,
         transition: 'opacity 0.25s ease-out',
         visibility: effectiveOpacity <= 0.01 ? 'hidden' : 'visible',
       }}
-      className="fixed top-0 left-0 w-screen h-screen z-10 pointer-events-none"
+      className="fixed top-0 left-0 w-screen h-screen z-10 pointer-events-none will-change-transform"
     >
       <canvas
         ref={canvasRef}

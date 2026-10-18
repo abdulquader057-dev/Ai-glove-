@@ -1,11 +1,11 @@
 // ATMOS Executive Engineering Dossier - Team Syntropy Section
-// Refined 4-column dossier grid with subtle top border dividers and glowing accent badges on hover
+// Refined 4-column dossier grid with 3D perspective tilt, mouse spotlight, and glowing top accents
 
 'use client';
 
 import React from 'react';
 import TeamSyntropyLogo from '@/components/brand/TeamSyntropyLogo';
-import { ArrowUpRight } from 'lucide-react';
+import { Atmos3DCard } from './Atmos3DCard';
 
 const TEAM_MEMBERS = [
   {
@@ -44,83 +44,84 @@ const TEAM_MEMBERS = [
 
 export const AtmosTeamDossier: React.FC = () => {
   return (
-    <section id="team" className="relative z-30 py-32 px-6 sm:px-10 max-w-7xl mx-auto border-t border-white/5">
+    <section id="team" className="relative z-30 py-36 px-6 sm:px-10 max-w-7xl mx-auto border-t border-white/5">
       {/* Header with Team Syntropy Logo */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
-        <div className="space-y-4 max-w-2xl text-left">
+        <div className="space-y-5 max-w-2xl text-left">
           <div className="flex items-center gap-3">
-            <TeamSyntropyLogo width={180} height={38} />
+            <TeamSyntropyLogo width={190} height={40} />
           </div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-[#00F2A6] text-xs font-mono font-bold tracking-widest uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00F2A6] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-[#00F2A6] text-xs font-mono font-bold tracking-[0.2em] uppercase shadow-[0_0_20px_rgba(0,242,166,0.15)]">
+            <span className="w-2 h-2 rounded-full bg-[#00F2A6] animate-pulse shadow-[0_0_8px_#00F2A6]" />
             <span>03 // EXECUTIVE ENGINEERING DOSSIER</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-space font-black tracking-tight text-[#F6F6F8] uppercase leading-[1.1]">
+          <h2 className="text-4xl sm:text-6xl lg:text-7xl font-stencil font-black tracking-tight text-[#F8FAFC] uppercase leading-[0.9]">
             MEET TEAM SYNTROPY.
           </h2>
-          <p className="text-sm sm:text-base text-[#7E8B95] font-sans leading-relaxed">
+          <p className="text-sm sm:text-lg text-[#8A99A8] font-sans leading-relaxed">
             The multidisciplinary engineering unit responsible for SIGNOVA's physical sensor fabrication, real-time serial telemetry, and edge machine learning classification.
           </p>
         </div>
 
-        <div className="hidden md:flex flex-col items-end font-mono text-xs text-[#7E8B95]">
-          <span className="text-[#F6F6F8] font-bold">ASSISTIVE KINEMATICS LAB</span>
-          <span>EST. 2026 // HYDERABAD, INDIA</span>
+        <div className="hidden md:flex flex-col items-end font-mono text-xs text-[#7E8B95] space-y-1">
+          <span className="text-[#F8FAFC] font-bold tracking-wider">ASSISTIVE KINEMATICS LAB</span>
+          <span className="text-[#00F2A6]">EST. 2026 // HYDERABAD, INDIA</span>
         </div>
       </div>
 
-      {/* 4-Column Refined Dossier Grid */}
+      {/* 4-Column 3D Tilt Dossier Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {TEAM_MEMBERS.map((member) => (
-          <div
+          <Atmos3DCard
             key={member.index}
-            className="group relative p-7 rounded-3xl bg-[#0A0D12]/60 border border-white/10 hover:border-white/30 transition-all duration-500 shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex flex-col justify-between backdrop-blur-xl overflow-hidden text-left"
+            accentColor={member.accent}
+            className="p-7 min-h-[420px] flex flex-col justify-between text-left"
           >
             {/* Top Border Glowing Highlight */}
             <div
               style={{ backgroundColor: member.accent }}
-              className="absolute top-0 left-0 right-0 h-[2px] opacity-20 group-hover:opacity-100 transition-opacity duration-500 shadow-[0_0_12px_currentColor]"
+              className="absolute top-0 left-0 right-0 h-[2px] opacity-40 group-hover:opacity-100 transition-opacity duration-500 shadow-[0_0_12px_currentColor]"
             />
 
             <div>
               {/* Member Index & Badge */}
-              <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/5">
-                <span className="font-mono text-sm font-bold text-[#7E8B95] group-hover:text-[#F6F6F8] transition-colors">
+              <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/10">
+                <span className="font-mono text-sm font-bold text-[#7E8B95] group-hover:text-[#F8FAFC] transition-colors">
                   {member.index} //
                 </span>
                 <span
                   style={{ color: member.accent }}
-                  className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/5"
+                  className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10"
                 >
                   {member.tag}
                 </span>
               </div>
 
               {/* Name & Title */}
-              <h3 className="font-space font-bold text-lg sm:text-xl text-[#F6F6F8] group-hover:text-white transition-colors leading-snug">
+              <h3 className="font-space font-black text-lg sm:text-xl text-[#F8FAFC] group-hover:text-white transition-colors leading-snug">
                 {member.name}
               </h3>
               <div
                 style={{ color: member.accent }}
-                className="font-mono text-xs font-semibold mt-2 tracking-wide"
+                className="font-mono text-xs font-bold mt-2 tracking-wide"
               >
                 {member.title}
               </div>
 
               {/* Focus Summary */}
-              <p className="font-sans text-xs text-[#7E8B95] mt-4 leading-relaxed">
+              <p className="font-sans text-xs text-[#8A99A8] mt-4 leading-relaxed">
                 {member.focus}
               </p>
             </div>
 
             {/* Bottom Dossier Marker */}
-            <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between font-mono text-[10px] text-[#7E8B95]">
-              <span>ACTIVE ARCHITECT</span>
-              <span className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">
+            <div className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between font-mono text-[11px] text-[#7E8B95]">
+              <span className="tracking-wider uppercase font-semibold">ACTIVE ARCHITECT</span>
+              <span className="text-[#00F2A6] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform font-bold text-sm">
                 ↗
               </span>
             </div>
-          </div>
+          </Atmos3DCard>
         ))}
       </div>
     </section>

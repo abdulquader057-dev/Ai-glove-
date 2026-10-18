@@ -114,13 +114,15 @@ export const AtmosNavbar: React.FC = () => {
             </span>
           </div>
 
-          {/* Solid Bone-White CTA Button: LAUNCH STUDIO ↗ */}
+          {/* Solid Bone-White CTA Button: [ LAUNCH STUDIO ↗ ] */}
           <button
             onClick={handleLaunchStudio}
-            className="px-5 py-2.5 rounded-full bg-[#F6F6F8] hover:bg-white text-[#050608] font-mono font-bold text-xs tracking-wider transition-all transform hover:scale-105 hover:shadow-[0_0_25px_rgba(246,246,248,0.35)] flex items-center gap-1.5 cursor-pointer"
+            className="atmos-btn-primary px-6 py-2.5 text-xs tracking-widest flex items-center gap-2 cursor-pointer"
           >
+            <span className="text-[#00F2A6] text-[10px]">[</span>
             <span>LAUNCH STUDIO</span>
-            <span className="text-sm leading-none">↗</span>
+            <span className="text-[#00F2A6] text-[10px]">]</span>
+            <span className="text-sm leading-none font-bold group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
           </button>
         </div>
 
