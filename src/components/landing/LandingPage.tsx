@@ -1,6 +1,6 @@
-// SIGNOVA - Native WebGL 3D Pipeline Landing Page
-// Architecture & Visual Caliber: atmos-bits.com replica
-// Tech Stack: Three.js, @react-three/fiber, @react-three/drei, Lenis Inertial Scroll, GSAP ScrollTrigger
+// SIGNOVA - Award-Winning Full-Screen Scrollytelling Landing Page
+// Architecture & Visual Caliber inspired strictly by atmos-bits.com
+// Tech Stack: Lenis Inertial Scrolling, GSAP ScrollTrigger, High-DPI Pinned Canvas Engine
 
 'use client';
 
@@ -11,13 +11,13 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { AtmosNavbar } from './AtmosNavbar';
-import { AtmosWebGLScene } from './AtmosWebGLScene';
+import { AtmosCanvasEngine } from './AtmosCanvasEngine';
 import { AtmosScrollytelling } from './AtmosScrollytelling';
 import { AtmosArchitectureGrid } from './AtmosArchitectureGrid';
 import { AtmosTeamDossier } from './AtmosTeamDossier';
 import TeamSyntropyLogo from '@/components/brand/TeamSyntropyLogo';
 import { useAuthStore } from '@/store/authStore';
-import { Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -45,7 +45,7 @@ export const LandingPage: React.FC = () => {
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
-    // 400vh Scroll Track for Cinematic WebGL 3D Kinematics
+    // Choreograph the 500vh scrollytelling container
     let trigger: ScrollTrigger | null = null;
     if (scrollContainerRef.current) {
       trigger = ScrollTrigger.create({
@@ -84,7 +84,7 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="relative w-full bg-[#050608] text-[#F6F6F8] font-sans selection:bg-[#00F2A6] selection:text-[#050608] overflow-x-clip">
       
-      {/* ── ATMOS Ambient Radial Lighting (Atmospheric Obsidian) ─────── */}
+      {/* ── ATMOS Ambient Radial Atmospheric Lighting ────────────────── */}
       <div 
         className="fixed inset-0 pointer-events-none z-0"
         style={{
@@ -98,17 +98,17 @@ export const LandingPage: React.FC = () => {
         }}
       />
 
-      {/* ── Full-Screen Native WebGL 3D Canvas Stage ─────────────────── */}
-      <AtmosWebGLScene progress={progress} />
+      {/* ── Fixed High-DPI Full-Screen Canvas Engine (164 Frames) ─────── */}
+      <AtmosCanvasEngine progress={progress} />
 
       {/* ── Floating Header Dock (ATMOS Minimalist Dock) ─────────────── */}
       <AtmosNavbar />
 
-      {/* ── 400vh 3D Scrollytelling Pinned Stage ─────────────────────── */}
+      {/* ── 500vh Scrollytelling Pinned Stage ────────────────────────── */}
       <div
         id="hero"
         ref={scrollContainerRef}
-        className="relative w-full h-[400vh]"
+        className="relative w-full h-[500vh]"
       >
         {/* Sticky 100vh Viewport */}
         <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-between z-20">
@@ -123,10 +123,10 @@ export const LandingPage: React.FC = () => {
       {/* ── 02 // TECHNICAL ARCHITECTURE CARDS GRID ───────────────────── */}
       <AtmosArchitectureGrid />
 
-      {/* ── 03 // TEAM SYNTROPY EDITORIAL DOSSIER SECTION ─────────────── */}
+      {/* ── 03 // TEAM SYNTROPY EXECUTIVE ENGINEERING DOSSIER ─────────── */}
       <AtmosTeamDossier />
 
-      {/* ── FINAL LAUNCH STUDIO CTA BANNER ─────────────────────────────── */}
+      {/* ── FINAL LAUNCH STUDIO BANNER ─────────────────────────────────── */}
       <section className="relative z-30 py-24 px-6 sm:px-10 max-w-7xl mx-auto">
         <div className="p-10 sm:p-16 rounded-3xl bg-[#0A0D12]/70 border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-8 text-left shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
           <div className="space-y-4 max-w-2xl">
@@ -162,9 +162,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-[11px]">
-            <span className="text-[#00F2A6]">Three.js WebGL</span>
+            <span className="text-[#00F2A6]">Seeed Xiao Sense</span>
             <span>•</span>
-            <span className="text-[#00D2FF]">ESP32-S3 / Xiao</span>
+            <span className="text-[#00D2FF]">115200 Baud</span>
             <span>•</span>
             <span className="text-[#F6F6F8]">Nordic NUS BLE</span>
             <span>•</span>
