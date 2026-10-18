@@ -74,36 +74,14 @@ export const AtmosCanvasEngine: React.FC<AtmosCanvasEngineProps> = ({
     const iw = img.naturalWidth || 800;
     const ih = img.naturalHeight || 450;
 
-    // Calculate containment & right-center placement
-    const isDesktop = W >= 1024;
-    let targetW: number;
-    let targetH: number;
-    let dx: number;
-    let dy: number;
+    // Full-screen cover scaling so the WebP animation fills 100% of the viewport edge-to-edge
+    const scale = Math.max(W / iw, H / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = (W - dw) / 2;
+    const dy = (H - dh) / 2;
 
-    if (isDesktop) {
-      // Desktop: place glove in the right half of the screen
-      targetW = Math.min(W * 0.58, 880);
-      targetH = H * 0.85;
-      const scale = Math.min(targetW / iw, targetH / ih);
-      const dw = iw * scale;
-      const dh = ih * scale;
-      const rightColStart = W * 0.44;
-      const rightColWidth = W * 0.54;
-      dx = rightColStart + (rightColWidth - dw) / 2;
-      dy = (H - dh) / 2;
-      ctx.drawImage(img, dx, dy, dw, dh);
-    } else {
-      // Mobile / Tablet: centered with top spacing
-      targetW = W * 0.94;
-      targetH = H * 0.55;
-      const scale = Math.min(targetW / iw, targetH / ih);
-      const dw = iw * scale;
-      const dh = ih * scale;
-      dx = (W - dw) / 2;
-      dy = H * 0.38 + (targetH - dh) / 2;
-      ctx.drawImage(img, dx, dy, dw, dh);
-    }
+    ctx.drawImage(img, dx, dy, dw, dh);
 
     ctx.restore();
     lastDrawnFrameRef.current = frameIdx;

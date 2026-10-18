@@ -46,6 +46,8 @@ export const AtmosScrollytelling: React.FC<AtmosScrollytellingProps> = ({
 
   return (
     <div className="relative w-full h-full flex items-center justify-between pointer-events-none select-none">
+      {/* Subtle cinematic gradient scrim for crystal-clear typography legibility */}
+      <div className="absolute inset-y-0 left-0 w-full lg:w-3/5 bg-gradient-to-r from-[#050608]/90 via-[#050608]/45 to-transparent pointer-events-none z-10" />
       
       {/* ── PHASE 1: HERO GENESIS (0% - 25%) ──────────────────────── */}
       <div
